@@ -61,8 +61,6 @@
         button:hover { background: #2563EB; }
         .btn-danger { background: #EF4444; }
         .btn-danger:hover { background: #DC2626; }
-        .btn-success { background: #10B981; }
-        .btn-success:hover { background: #059669; }
         .btn-warning { background: #F59E0B; }
         .btn-warning:hover { background: #D97706; }
         select, input {
@@ -259,21 +257,30 @@
             row.insertCell(0).innerHTML = `<input type="checkbox" class="device-checkbox" data-deviceid="${d.deviceId}">`;
             row.insertCell(1).innerText = idx + 1;
             
-            // Kolom Nama Pelanggan (bisa diedit langsung)
+            // Kolom Nama Pelanggan - DENGAN TOMBOL SAVE
             const nameCell = row.insertCell(2);
             const nameInput = document.createElement('input');
             nameInput.type = 'text';
             nameInput.value = d.customerName || 'Anonymous';
             nameInput.className = 'name-input';
             nameInput.placeholder = 'Nama pelanggan';
-            nameInput.onchange = async () => {
+            
+            const saveBtn = document.createElement('button');
+            saveBtn.innerHTML = '<i class="fas fa-save"></i>';
+            saveBtn.style.marginLeft = '5px';
+            saveBtn.style.padding = '0.3rem 0.5rem';
+            saveBtn.onclick = async () => {
                 const newName = nameInput.value;
-                if (newName !== d.customerName) {
-                    await callAPI('updateCustomerName', { deviceId: d.deviceId, customerName: newName });
+                const result = await callAPI('updateCustomerName', { deviceId: d.deviceId, customerName: newName });
+                if (result.success) {
                     d.customerName = newName;
+                    alert('Nama berhasil disimpan!');
+                } else {
+                    alert('Gagal simpan: ' + (result.message || result.error));
                 }
             };
             nameCell.appendChild(nameInput);
+            nameCell.appendChild(saveBtn);
             
             row.insertCell(3).innerHTML = `<span title="${d.deviceId}">${d.deviceId.slice(0,10)}...</span>`;
             row.insertCell(4).innerText = d.firstAccess ? new Date(d.firstAccess).toLocaleDateString() : '-';

