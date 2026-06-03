@@ -222,8 +222,8 @@
 
 <script>
     // ========== KONFIGURASI ==========
-    // GANTI dengan URL Cloudflare Worker ANDA (tanpa /api/upload, cukup domain saja)
-    const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
+    // GANTI dengan URL Cloudflare Worker ANDA (WAJIB include /api/upload)
+    const WORKER_URL = "https://timestamp.sapammeded.workers.dev/api/health";
     
     let deviceId = null;
     let trialValid = false;
