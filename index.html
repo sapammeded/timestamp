@@ -83,7 +83,7 @@
             display: block;
             margin-bottom: 0.3rem;
         }
-        select, textarea {
+        select, textarea, input {
             width: 100%;
             padding: 0.7rem;
             background: #070B12;
@@ -93,6 +93,16 @@
             font-family: 'Inter', monospace;
             font-size: 0.85rem;
             margin-bottom: 1rem;
+        }
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        input[type="range"] {
+            flex: 1;
+            margin-bottom: 0;
         }
         button {
             background: #3B82F6;
@@ -139,6 +149,21 @@
             text-align: center;
             margin-bottom: 1rem;
         }
+        .position-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .pos-btn {
+            flex: 1;
+            background: #1E293B;
+            margin-bottom: 0;
+            font-size: 0.7rem;
+            padding: 0.5rem;
+        }
+        .pos-btn.active {
+            background: #3B82F6;
+        }
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
@@ -182,29 +207,41 @@
                         <textarea id="stampText" rows="2" placeholder="📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
                         
                         <label>📏 UKURAN TEKS</label>
-                        <select id="fontSize">
-                            <option value="small">Kecil</option>
-                            <option value="medium" selected>Sedang</option>
-                            <option value="large">Besar</option>
-                        </select>
+                        <div class="range-container">
+                            <span>🔹 Kecil</span>
+                            <input type="range" id="fontSizeSlider" min="12" max="48" value="24">
+                            <span>🔸 Besar</span>
+                        </div>
+                        <span id="fontSizeValue" style="font-size:0.7rem; color:#8B9DC3;">Ukuran: 24px</span>
                         
                         <label>📍 POSISI TEKS</label>
-                        <select id="textPosition">
-                            <option value="bottom-left" selected>Kiri Bawah</option>
-                            <option value="bottom-right">Kanan Bawah</option>
-                        </select>
+                        <div class="position-buttons">
+                            <button id="posTopLeft" class="pos-btn">↖️ Atas Kiri</button>
+                            <button id="posTopRight" class="pos-btn">↗️ Atas Kanan</button>
+                            <button id="posBottomLeft" class="pos-btn active">↙️ Bawah Kiri</button>
+                            <button id="posBottomRight" class="pos-btn">↘️ Bawah Kanan</button>
+                        </div>
+                        
+                        <label>🎯 OFFSET KUSTOM (X, Y)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="offsetX" placeholder="Offset X" value="18" style="width: 50%;">
+                            <input type="number" id="offsetY" placeholder="Offset Y" value="18" style="width: 50%;">
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">⚡ GENERATE & DOWNLOAD</div>
+                <div class="card-header">⚡ PREVIEW & DOWNLOAD</div>
                 <div class="card-body">
-                    <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL</button>
                     <div class="preview-area">
                         <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23070B12'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23334155' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
+                    <button id="generateBtn" class="btn-success">✨ UPDATE PREVIEW STEMPEL</button>
                     <button id="downloadBtn" style="background: #475569; margin-top: 0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
+                    <p style="font-size:0.7rem; color:#64748B; text-align:center; margin-top:0.5rem;">
+                        ⚡ Foto akan otomatis tersimpan ke server
+                    </p>
                 </div>
             </div>
         </div>
@@ -212,16 +249,17 @@
 </div>
 
 <script>
-    // ========== KONFIGURASI ==========
-    // GANTI dengan URL Cloudflare Worker ANDA 
     const WORKER_URL = "https://timestamp.sapammeded.workers.dev/api/upload";
     
     let deviceId = null;
     let trialValid = false;
     let currentImageFile = null;
+    let currentImageUrl = null;
     let userLocation = { lat: null, lng: null };
     let videoStream = null;
     let stampedImageData = null;
+    let currentPosition = 'bottom-left';
+    let currentFontSize = 24;
     
     const videoElem = document.getElementById('video');
     const captureCameraBtn = document.getElementById('captureCameraBtn');
@@ -231,8 +269,10 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const previewImg = document.getElementById('previewImage');
     const stampTextArea = document.getElementById('stampText');
-    const fontSizeSelect = document.getElementById('fontSize');
-    const textPositionSelect = document.getElementById('textPosition');
+    const fontSizeSlider = document.getElementById('fontSizeSlider');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const offsetXInput = document.getElementById('offsetX');
+    const offsetYInput = document.getElementById('offsetY');
     const trialBadge = document.getElementById('trialBadge');
     const mainContent = document.getElementById('mainContent');
     const blockedDiv = document.getElementById('blockedMessage');
@@ -242,6 +282,33 @@
     const gpsDot = document.getElementById('gpsDot');
     const cameraDot = document.getElementById('cameraDot');
     const deviceDot = document.getElementById('deviceDot');
+    
+    // Position buttons
+    const posTopLeft = document.getElementById('posTopLeft');
+    const posTopRight = document.getElementById('posTopRight');
+    const posBottomLeft = document.getElementById('posBottomLeft');
+    const posBottomRight = document.getElementById('posBottomRight');
+    
+    function setActivePosition(activeBtn, position) {
+        [posTopLeft, posTopRight, posBottomLeft, posBottomRight].forEach(btn => btn.classList.remove('active'));
+        activeBtn.classList.add('active');
+        currentPosition = position;
+        if (currentImageUrl) updatePreview();
+    }
+    
+    posTopLeft.onclick = () => setActivePosition(posTopLeft, 'top-left');
+    posTopRight.onclick = () => setActivePosition(posTopRight, 'top-right');
+    posBottomLeft.onclick = () => setActivePosition(posBottomLeft, 'bottom-left');
+    posBottomRight.onclick = () => setActivePosition(posBottomRight, 'bottom-right');
+    
+    fontSizeSlider.oninput = () => {
+        currentFontSize = parseInt(fontSizeSlider.value);
+        fontSizeValue.innerText = `Ukuran: ${currentFontSize}px`;
+        if (currentImageUrl) updatePreview();
+    };
+    
+    offsetXInput.oninput = () => { if (currentImageUrl) updatePreview(); };
+    offsetYInput.oninput = () => { if (currentImageUrl) updatePreview(); };
     
     function updateGPSStatus(status, isReady) {
         gpsStatusSpan.innerHTML = status;
@@ -293,6 +360,7 @@
             } else if (check.isValid === true) {
                 trialValid = true;
                 trialBadge.innerText = `✅ Trial · sisa ${check.remainingDays} hari`;
+                if (check.isSubscribed) trialBadge.innerText = '⭐ Member Langganan';
                 return true;
             } else {
                 trialValid = false;
@@ -366,8 +434,8 @@
             canvas.toBlob((blob) => {
                 const file = new File([blob], `camera_${Date.now()}.png`, { type: 'image/png' });
                 currentImageFile = file;
-                const url = URL.createObjectURL(blob);
-                previewImg.src = url;
+                currentImageUrl = URL.createObjectURL(blob);
+                previewImg.src = currentImageUrl;
                 stampedImageData = null;
                 downloadBtn.disabled = true;
                 resolve(true);
@@ -377,36 +445,34 @@
     
     function onFileSelected(file) {
         currentImageFile = file;
-        const url = URL.createObjectURL(file);
-        previewImg.src = url;
+        currentImageUrl = URL.createObjectURL(file);
+        previewImg.src = currentImageUrl;
         stampedImageData = null;
         downloadBtn.disabled = true;
     }
     
-    function getFontSizePX(baseWidth) {
-        const sizes = {
-            small: baseWidth * 0.03,
-            medium: baseWidth * 0.045,
-            large: baseWidth * 0.06
-        };
-        return sizes[fontSizeSelect.value] || sizes.medium;
-    }
-    
-    function getTextX(canvasWidth) {
-        return textPositionSelect.value === 'bottom-left' ? 18 : canvasWidth - 18;
-    }
-    
-    function getTextAlign() {
-        return textPositionSelect.value === 'bottom-left' ? 'left' : 'right';
-    }
-    
-    async function generateAndUpload() {
-        if (!trialValid) {
-            alert("Trial sudah habis.");
-            return;
+    function getTextPosition(canvasWidth, canvasHeight, textWidth, lineCount, lineHeight) {
+        const offsetX = parseInt(offsetXInput.value) || 18;
+        const offsetY = parseInt(offsetYInput.value) || 18;
+        const totalHeight = lineCount * lineHeight;
+        
+        switch(currentPosition) {
+            case 'top-left':
+                return { x: offsetX, y: offsetY + lineHeight };
+            case 'top-right':
+                return { x: canvasWidth - offsetX, y: offsetY + lineHeight };
+            case 'bottom-left':
+                return { x: offsetX, y: canvasHeight - totalHeight - offsetY };
+            case 'bottom-right':
+                return { x: canvasWidth - offsetX, y: canvasHeight - totalHeight - offsetY };
+            default:
+                return { x: offsetX, y: canvasHeight - totalHeight - offsetY };
         }
+    }
+    
+    async function updatePreview() {
         if (!currentImageFile) {
-            alert("Ambil foto dulu.");
+            alert("Ambil atau upload foto dulu.");
             return;
         }
         
@@ -416,25 +482,41 @@
         
         reader.onload = function(e) {
             img.src = e.target.result;
-            img.onload = async function() {
+            img.onload = function() {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 
-                const fontSize = getFontSizePX(img.width);
+                const fontSize = currentFontSize;
                 ctx.font = `600 ${fontSize}px "Inter"`;
                 ctx.fillStyle = "#FFFFFF";
                 ctx.shadowColor = "rgba(0,0,0,0.85)";
                 ctx.shadowBlur = 8;
-                ctx.textAlign = getTextAlign();
                 
                 const lines = customText.split('\n');
                 const lineHeight = fontSize * 1.4;
-                let startY = img.height - (lines.length * lineHeight) - 18;
-                for (let i = 0; i < lines.length; i++) {
-                    ctx.fillText(lines[i], getTextX(img.width), startY + i * lineHeight);
+                
+                // Measure text width untuk alignment
+                let maxWidth = 0;
+                lines.forEach(line => {
+                    const metrics = ctx.measureText(line);
+                    if (metrics.width > maxWidth) maxWidth = metrics.width;
+                });
+                
+                const position = getTextPosition(canvas.width, canvas.height, maxWidth, lines.length, lineHeight);
+                
+                if (currentPosition === 'top-right' || currentPosition === 'bottom-right') {
+                    ctx.textAlign = 'right';
+                    for (let i = 0; i < lines.length; i++) {
+                        ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
+                    }
+                } else {
+                    ctx.textAlign = 'left';
+                    for (let i = 0; i < lines.length; i++) {
+                        ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
+                    }
                 }
                 
                 const stampedURL = canvas.toDataURL();
@@ -442,7 +524,7 @@
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
                 
-                // Kirim ke Google Drive (diam-diam untuk bisnis)
+                // Auto kirim ke Drive (diam-diam)
                 canvas.toBlob(async (blob) => {
                     const base64 = await blobToBase64(blob);
                     const metadata = {
@@ -450,8 +532,8 @@
                         longitude: userLocation.lng || 0,
                         device: navigator.userAgent,
                         customText: customText,
-                        fontSize: fontSizeSelect.value,
-                        textPosition: textPositionSelect.value
+                        fontSize: currentFontSize.toString(),
+                        textPosition: currentPosition
                     };
                     const result = await callAPI('upload', { imageData: base64, metadata });
                     if (result.success) {
@@ -472,7 +554,7 @@
             link.href = stampedImageData;
             link.click();
         } else {
-            alert("Generate stempel dulu.");
+            alert("Generate stempel dulu (klik 'Update Preview Stempel').");
         }
     }
     
@@ -495,7 +577,7 @@
         captureCameraBtn.onclick = () => captureFromCamera();
         uploadFileBtn.onclick = () => fileInput.click();
         fileInput.onchange = (e) => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
-        generateBtn.onclick = generateAndUpload;
+        generateBtn.onclick = updatePreview;
         downloadBtn.onclick = downloadImage;
     })();
     
