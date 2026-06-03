@@ -170,8 +170,7 @@
 </div>
 
 <script>
-    // ========== KONFIGURASI ==========
-    const WORKER_URL = "https://timestamp.sapammeded.workers.dev/api/upload";
+    const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
     
     async function callAPI(action, extra = {}) {
         try {
@@ -206,7 +205,7 @@
             document.getElementById('adminPanel').style.display = 'block';
             await loadAllData();
         } else {
-            errorDiv.innerText = 'Login gagal! ' + (result?.message || 'Unknown error');
+            errorDiv.innerText = 'Login gagal! ' + (result?.message || result?.error || 'Unknown error');
             errorDiv.style.display = 'block';
         }
     }
