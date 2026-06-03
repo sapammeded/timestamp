@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueStamp | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0C15;
+            color: #E8EDF5;
+            padding: 2rem;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1E293B;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #60A5FA); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .card {
+            background: #12192C;
+            border-radius: 1.2rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #1E293B;
+        }
+        .card h3 { margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #1E293B; }
+        th { background: #0F1629; color: #9AA5C1; }
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-trial { background: #EAB308; color: #1E293B; }
+        .badge-subscribed { background: #10B981; color: white; }
+        .badge-expired { background: #EF4444; color: white; }
+        .badge-pending { background: #6B7280; color: white; }
+        button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        button:hover { background: #2563EB; }
+        .btn-danger { background: #EF4444; }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-success { background: #10B981; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #F59E0B; }
+        .btn-warning:hover { background: #D97706; }
+        select, input {
+            padding: 0.3rem 0.5rem;
+            background: #0F1629;
+            border: 1px solid #1E293B;
+            border-radius: 0.4rem;
+            color: white;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            background: #12192C;
+            padding: 2rem;
+            border-radius: 1.2rem;
+            border: 1px solid #1E293B;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            background: #0F1629;
+            border: 1px solid #1E293B;
+            border-radius: 0.5rem;
+            color: white;
+        }
+        .login-box button { width: 100%; padding: 0.75rem; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #0F1629;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #1E293B;
+        }
+        .stat-number { font-size: 1.8rem; font-weight: 700; color: #60A5FA; }
+        .stat-label { font-size: 0.65rem; color: #7E8AA8; }
+        .action-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .checkbox-col { width: 30px; text-align: center; }
+        @media (max-width: 768px) { body { padding: 1rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="loginDiv" class="login-box">
+        <h2><i class="fas fa-shield-alt"></i> Admin Panel</h2>
+        <div id="loginError" style="background:#7F1A1A; padding:0.5rem; border-radius:0.5rem; margin-bottom:1rem; display:none;"></div>
+        <input type="text" id="adminUser" placeholder="Username">
+        <input type="password" id="adminPass" placeholder="Password">
+        <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+    </div>
+
+    <div id="adminPanel" style="display:none;">
+        <div class="header">
+            <div class="logo"><h1><i class="fas fa-crown"></i> TrueStamp Admin</h1></div>
+            <div><button id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button> <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number" id="totalDevices">0</div><div class="stat-label">Total Device</div></div>
+            <div class="stat-card"><div class="stat-number" id="subscribedDevices">0</div><div class="stat-label">Langganan Aktif</div></div>
+            <div class="stat-card"><div class="stat-number" id="trialDevices">0</div><div class="stat-label">Trial Aktif</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalPhotos">0</div><div class="stat-label">Total Foto</div></div>
+        </div>
+
+        <!-- DAFTAR DEVICE -->
+        <div class="card">
+            <h3><i class="fas fa-mobile-alt"></i> Daftar Device & Langganan</h3>
+            <div class="action-bar">
+                <button id="selectAllDevicesBtn" class="btn-warning"><i class="fas fa-check-double"></i> Pilih Semua</button>
+                <button id="deleteSelectedDevicesBtn" class="btn-danger"><i class="fas fa-trash-alt"></i> Hapus Terpilih</button>
+            </div>
+            <div class="table-container">
+                <table id="devicesTable">
+                    <thead><tr><th class="checkbox-col"><input type="checkbox" id="devicesSelectAllCheckbox"></th><th>No</th><th>Nama</th><th>Device ID</th><th>First Access</th><th>Status</th><th>Langganan</th><th>Aksi</th></tr></thead>
+                    <tbody id="devicesBody"><tr><td colspan="8" class="loading">Memuat...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- LOG UPLOAD FOTO -->
+        <div class="card">
+            <h3><i class="fas fa-history"></i> Log Upload Foto</h3>
+            <div class="action-bar">
+                <button id="selectAllLogsBtn" class="btn-warning"><i class="fas fa-check-double"></i> Pilih Semua</button>
+                <button id="deleteSelectedLogsBtn" class="btn-danger"><i class="fas fa-trash-alt"></i> Hapus Terpilih</button>
+            </div>
+            <div class="table-container">
+                <table id="logsTable">
+                    <thead><tr><th class="checkbox-col"><input type="checkbox" id="logsSelectAllCheckbox"></th><th>No</th><th>Waktu</th><th>Device ID</th><th>Lokasi</th><th>Teks</th><th>Tipe</th><th>Foto</th><th>Aksi</th></tr></thead>
+                    <tbody id="logsBody"><tr><td colspan="9" class="loading">Memuat...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
+    let devicesData = [];
+    let logsData = [];
+    
+    async function callAPI(action, extra = {}) {
+        const res = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, ...extra })
+        });
+        return await res.json();
+    }
+
+    async function login() {
+        const username = document.getElementById('adminUser').value;
+        const password = document.getElementById('adminPass').value;
+        const errorDiv = document.getElementById('loginError');
+        errorDiv.style.display = 'none';
+        if (!username || !password) { errorDiv.innerText = 'Isi username dan password!'; errorDiv.style.display = 'block'; return; }
+        const result = await callAPI('adminLogin', { username, password });
+        if (result && result.success) {
+            document.getElementById('loginDiv').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            await loadAllData();
+        } else {
+            errorDiv.innerText = 'Login gagal! ' + (result?.message || 'Cek tab Admins di Google Sheets');
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    async function loadAllData() { await loadDevices(); await loadLogs(); }
+
+    async function loadDevices() {
+        const body = document.getElementById('devicesBody');
+        body.innerHTML = '<tr><td colspan="8" class="loading">Memuat...</td></tr>';
+        const result = await callAPI('getAllDevices');
+        if (!result?.success || !result.devices) { body.innerHTML = '<tr><td colspan="8">Gagal memuat</td></tr>'; return; }
+        devicesData = result.devices;
+        document.getElementById('totalDevices').innerText = devicesData.length;
+        document.getElementById('subscribedDevices').innerText = devicesData.filter(d => d.subscription === 'subscribed').length;
+        document.getElementById('trialDevices').innerText = devicesData.filter(d => d.subscription === 'pending').length;
+        if (devicesData.length === 0) { body.innerHTML = '<tr><td colspan="8">Belum ada device</td></tr>'; return; }
+        body.innerHTML = '';
+        devicesData.forEach((d, idx) => {
+            const row = body.insertRow();
+            row.insertCell(0).innerHTML = `<input type="checkbox" class="device-checkbox" data-deviceid="${d.deviceId}">`;
+            row.insertCell(1).innerText = idx + 1;
+            const nameCell = row.insertCell(2);
+            const nameInput = document.createElement('input');
+            nameInput.value = d.customerName || 'Anonymous';
+            nameInput.style.background = '#0F1629';
+            nameInput.style.border = '1px solid #1E293B';
+            nameInput.style.padding = '0.3rem';
+            nameInput.style.borderRadius = '0.4rem';
+            nameInput.style.color = 'white';
+            nameInput.style.width = '100px';
+            nameInput.onchange = async () => {
+                await callAPI('updateCustomerName', { deviceId: d.deviceId, customerName: nameInput.value });
+                loadDevices();
+            };
+            nameCell.appendChild(nameInput);
+            row.insertCell(3).innerHTML = `<span title="${d.deviceId}">${d.deviceId.slice(0,10)}...</span>`;
+            row.insertCell(4).innerText = d.firstAccess ? new Date(d.firstAccess).toLocaleDateString() : '-';
+            row.insertCell(5).innerHTML = `<span class="badge ${d.status === 'trial' ? 'badge-trial' : 'badge-expired'}">${d.status || 'trial'}</span>`;
+            const subStatus = d.subscription || 'pending';
+            let subClass = 'badge-pending';
+            if (subStatus === 'subscribed') subClass = 'badge-subscribed';
+            if (subStatus === 'expired') subClass = 'badge-expired';
+            const subCell = row.insertCell(6);
+            const subSelect = document.createElement('select');
+            subSelect.innerHTML = `<option value="pending" ${subStatus === 'pending' ? 'selected' : ''}>Trial</option><option value="subscribed" ${subStatus === 'subscribed' ? 'selected' : ''}>Langganan</option><option value="expired" ${subStatus === 'expired' ? 'selected' : ''}>Expired</option>`;
+            subSelect.onchange = async () => {
+                await callAPI('updateSubscription', { deviceId: d.deviceId, status: subSelect.value });
+                loadDevices();
+            };
+            subCell.appendChild(subSelect);
+            const actionCell = row.insertCell(7);
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = '<i class="fas fa-trash"></i> Hapus';
+            delBtn.className = 'btn-danger';
+            delBtn.onclick = async () => {
+                if (confirm(`Hapus device ${d.deviceId.slice(0,10)}?`)) {
+                    await callAPI('deleteDevice', { deviceId: d.deviceId });
+                    loadDevices();
+                }
+            };
+            actionCell.appendChild(delBtn);
+        });
+    }
+
+    async function loadLogs() {
+        const body = document.getElementById('logsBody');
+        body.innerHTML = '<tr><td colspan="9" class="loading">Memuat...</td></tr>';
+        const result = await callAPI('getLogs', { limit: 200 });
+        if (!result?.success || !result.logs) { body.innerHTML = '<tr><td colspan="9">Gagal memuat</td></tr>'; return; }
+        logsData = result.logs;
+        document.getElementById('totalPhotos').innerText = logsData.length;
+        if (logsData.length === 0) { body.innerHTML = '<tr><td colspan="9">Belum ada foto</td></tr>'; return; }
+        body.innerHTML = '';
+        logsData.forEach((log, idx) => {
+            const row = body.insertRow();
+            row.insertCell(0).innerHTML = `<input type="checkbox" class="log-checkbox" data-rowindex="${log.rowIndex}">`;
+            row.insertCell(1).innerText = idx + 1;
+            row.insertCell(2).innerText = log.timestamp ? new Date(log.timestamp).toLocaleString() : '-';
+            row.insertCell(3).innerHTML = `<span title="${log.deviceId}">${log.deviceId?.slice(0,10) || '-'}...</span>`;
+            row.insertCell(4).innerText = `${log.latitude || 0}, ${log.longitude || 0}`;
+            row.insertCell(5).innerText = log.customText ? (log.customText.length > 40 ? log.customText.slice(0,40)+'...' : log.customText) : '-';
+            row.insertCell(6).innerHTML = `<span class="badge ${log.type === 'Auto Capture' ? 'badge-trial' : 'badge-subscribed'}">${log.type || 'Manual'}</span>`;
+            row.insertCell(7).innerHTML = log.fileUrl ? `<a href="${log.fileUrl}" target="_blank" style="color:#60A5FA">Lihat</a>` : '-';
+            const actionCell = row.insertCell(8);
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            delBtn.className = 'btn-danger';
+            delBtn.onclick = async () => {
+                if (confirm(`Hapus log ini?`)) {
+                    await callAPI('deleteLog', { rowIndex: log.rowIndex });
+                    loadLogs();
+                }
+            };
+            actionCell.appendChild(delBtn);
+        });
+    }
+
+    // Hapus Massal Device
+    document.getElementById('devicesSelectAllCheckbox')?.addEventListener('change', (e) => {
+        document.querySelectorAll('.device-checkbox').forEach(cb => cb.checked = e.target.checked);
+    });
+    document.getElementById('selectAllDevicesBtn')?.addEventListener('click', () => {
+        const allCb = document.querySelectorAll('.device-checkbox');
+        const allChecked = Array.from(allCb).every(cb => cb.checked);
+        allCb.forEach(cb => cb.checked = !allChecked);
+    });
+    document.getElementById('deleteSelectedDevicesBtn')?.addEventListener('click', async () => {
+        const selected = Array.from(document.querySelectorAll('.device-checkbox:checked')).map(cb => cb.dataset.deviceid);
+        if (selected.length === 0) { alert("Pilih device yang akan dihapus."); return; }
+        if (confirm(`Hapus ${selected.length} device?`)) {
+            for (const deviceId of selected) {
+                await callAPI('deleteDevice', { deviceId });
+            }
+            loadDevices();
+        }
+    });
+
+    // Hapus Massal Log
+    document.getElementById('logsSelectAllCheckbox')?.addEventListener('change', (e) => {
+        document.querySelectorAll('.log-checkbox').forEach(cb => cb.checked = e.target.checked);
+    });
+    document.getElementById('selectAllLogsBtn')?.addEventListener('click', () => {
+        const allCb = document.querySelectorAll('.log-checkbox');
+        const allChecked = Array.from(allCb).every(cb => cb.checked);
+        allCb.forEach(cb => cb.checked = !allChecked);
+    });
+    document.getElementById('deleteSelectedLogsBtn')?.addEventListener('click', async () => {
+        const selected = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => parseInt(cb.dataset.rowindex));
+        if (selected.length === 0) { alert("Pilih log yang akan dihapus."); return; }
+        if (confirm(`Hapus ${selected.length} log?`)) {
+            for (const rowIndex of selected) {
+                await callAPI('deleteLog', { rowIndex });
+            }
+            loadLogs();
+        }
+    });
+
+    function logout() {
+        document.getElementById('loginDiv').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('adminUser').value = '';
+        document.getElementById('adminPass').value = '';
+    }
+
+    document.getElementById('loginBtn').onclick = login;
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('refreshBtn').onclick = () => loadAllData();
+</script>
+</body>
+</html>
