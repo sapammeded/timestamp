@@ -43,6 +43,30 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
+        .status-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+            background: #0F1420;
+            border: 1px solid #1E293B;
+            border-radius: 0.8rem;
+            font-size: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22C55E;
+        }
+        .status-dot.warning { background: #EAB308; }
+        .status-dot.error { background: #EF4444; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .card {
             background: #0F1420;
@@ -97,6 +121,18 @@
             border: 1px solid #334155;
         }
         .btn-outline:hover { background: #1E293B; border-color: #3B82F6; }
+        .video-container {
+            background: #000000;
+            border-radius: 0.6rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            aspect-ratio: 4/3;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .preview-area {
             background: #070B12;
             border-radius: 0.6rem;
@@ -110,7 +146,6 @@
             max-height: 280px;
             object-fit: contain;
         }
-        .hidden-camera { display: none; }
         .alert {
             background: #2D1A1A;
             border: 1px solid #7F1A1A;
@@ -135,6 +170,22 @@
         <div class="trial-badge" id="trialBadge">Memuat...</div>
     </div>
 
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-dot" id="gpsDot"></div>
+            <span id="gpsStatus">📍 Menunggu GPS...</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot" id="cameraDot"></div>
+            <span id="cameraStatus">📷 Menunggu kamera...</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot" id="deviceDot"></div>
+            <span id="deviceStatus">🖥️ Memuat device ID...</span>
+        </div>
+    </div>
+
     <div id="blockedMessage" class="alert" style="display: none;">
         ⛔ Trial 7 hari telah berakhir. Silakan berlangganan.
     </div>
@@ -144,13 +195,15 @@
             <div class="card">
                 <div class="card-header">📸 SUMBER FOTO</div>
                 <div class="card-body">
-                    <video id="video" autoplay playsinline class="hidden-camera"></video>
-                    <button id="captureCameraBtn">📷 AMBIL DARI KAMERA</button>
+                    <div class="video-container">
+                        <video id="video" autoplay playsinline></video>
+                    </div>
+                    <button id="captureCameraBtn">📷 AMBIL FOTO (CAPTURE)</button>
                     <button id="uploadFileBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     <div style="margin-top: 1.2rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan&#10;📅 25 Maret 2026 14:30"></textarea>
+                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689"></textarea>
                     </div>
                 </div>
             </div>
@@ -158,7 +211,7 @@
             <div class="card">
                 <div class="card-header">⚡ GENERATE & SIMPAN</div>
                 <div class="card-body">
-                    <button id="generateBtn">✨ TERAPKAN STEMPEL & SIMPAN</button>
+                    <button id="generateBtn">✨ TERAPKAN STEMPEL & SIMPAN KE DRIVE</button>
                     <div class="preview-area">
                         <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23070B12'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23334155' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
@@ -170,15 +223,18 @@
 
 <script>
     // ========== KONFIGURASI ==========
-    // GANTI dengan URL Cloudflare Worker ANDA (include /api/upload)
-    const WORKER_URL = https://timestamp.sapammeded.workers.dev/api/upload";
+    // GANTI dengan URL Apps Script Web App ANDA setelah deploy
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1sFqBMvdJvRejep_ZzERmoP04mERrlnvxwTHqjlUw5iJvWyPexbgOEwwoR1tWnCXa/exec";
     
     let deviceId = null;
     let trialValid = false;
     let currentImageFile = null;
     let userLocation = { lat: null, lng: null };
     let videoStream = null;
+    let gpsReady = false;
+    let cameraReady = false;
     
+    // DOM Elements
     const videoElem = document.getElementById('video');
     const captureCameraBtn = document.getElementById('captureCameraBtn');
     const uploadFileBtn = document.getElementById('uploadFileBtn');
@@ -189,16 +245,48 @@
     const trialBadge = document.getElementById('trialBadge');
     const mainContent = document.getElementById('mainContent');
     const blockedDiv = document.getElementById('blockedMessage');
+    const gpsStatusSpan = document.getElementById('gpsStatus');
+    const cameraStatusSpan = document.getElementById('cameraStatus');
+    const deviceStatusSpan = document.getElementById('deviceStatus');
+    const gpsDot = document.getElementById('gpsDot');
+    const cameraDot = document.getElementById('cameraDot');
+    const deviceDot = document.getElementById('deviceDot');
     
-    async function getDeviceId() {
-        const fp = await FingerprintJS.load();
-        const result = await fp.get();
-        return result.visitorId;
+    // Update status UI
+    function updateGPSStatus(status, isReady) {
+        gpsReady = isReady;
+        gpsStatusSpan.innerHTML = status;
+        gpsDot.className = isReady ? 'status-dot' : 'status-dot warning';
+        if (!isReady && status.includes('ditolak')) gpsDot.className = 'status-dot error';
     }
     
+    function updateCameraStatus(status, isReady) {
+        cameraReady = isReady;
+        cameraStatusSpan.innerHTML = status;
+        cameraDot.className = isReady ? 'status-dot' : 'status-dot warning';
+        if (!isReady && status.includes('ditolak')) cameraDot.className = 'status-dot error';
+    }
+    
+    // 1. Fingerprint Device ID
+    async function getDeviceId() {
+        try {
+            const fp = await FingerprintJS.load();
+            const result = await fp.get();
+            deviceId = result.visitorId;
+            deviceStatusSpan.innerHTML = `✅ Device ID: ${deviceId.substring(0, 8)}...`;
+            deviceDot.className = 'status-dot';
+            return deviceId;
+        } catch(err) {
+            deviceStatusSpan.innerHTML = '❌ Gagal load fingerprint';
+            deviceDot.className = 'status-dot error';
+            throw err;
+        }
+    }
+    
+    // 2. API Call ke Apps Script
     async function callAPI(action, extra = {}) {
         const payload = { action, deviceId, ...extra };
-        const response = await fetch(WORKER_URL, {
+        const response = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -206,6 +294,7 @@
         return await response.json();
     }
     
+    // 3. Cek & Register Trial
     async function checkAndRegisterDevice() {
         try {
             const check = await callAPI('checkDevice');
@@ -235,37 +324,67 @@
         return false;
     }
     
-    async function initCameraBackground() {
+    // 4. Inisialisasi Kamera (Otomatis minta izin saat load)
+    async function initCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } // Kamera belakang otomatis
+            });
             videoStream = stream;
             videoElem.srcObject = stream;
+            updateCameraStatus('✅ Kamera aktif (siap capture)', true);
             return true;
         } catch (err) {
             console.warn("Kamera ditolak:", err);
+            updateCameraStatus('❌ Izin kamera ditolak', false);
             return false;
         }
     }
     
-    function initGPSBackground() {
+    // 5. Inisialisasi GPS (Otomatis minta izin saat load)
+    function initGPS() {
         if ("geolocation" in navigator) {
+            updateGPSStatus('📍 Meminta izin lokasi...', false);
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     userLocation.lat = pos.coords.latitude;
                     userLocation.lng = pos.coords.longitude;
+                    updateGPSStatus(`📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`, true);
+                    
+                    // Isi default stamp text jika kosong
                     if (!stampTextArea.value.trim()) {
                         const now = new Date();
-                        stampTextArea.value = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}\n📍 ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`;
+                        const formattedDate = now.toLocaleDateString('id-ID', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        const formattedTime = now.toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        stampTextArea.value = `${formattedDate}\n⏰ ${formattedTime}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
                 },
-                (err) => { console.warn("GPS ditolak:", err); }
+                (err) => {
+                    console.warn("GPS ditolak:", err);
+                    if (err.code === 1) {
+                        updateGPSStatus('⚠️ Izin lokasi ditolak (stempel manual)', false);
+                    } else {
+                        updateGPSStatus('⚠️ GPS tidak tersedia', false);
+                    }
+                }
             );
+        } else {
+            updateGPSStatus('❌ Browser tidak support GPS', false);
         }
     }
     
+    // 6. Capture dari kamera
     async function captureFromCamera() {
         if (!videoStream) {
-            alert("Kamera tidak tersedia. Berikan izin kamera.");
+            alert("Kamera tidak aktif. Berikan izin kamera terlebih dahulu.");
             return;
         }
         const canvas = document.createElement('canvas');
@@ -285,23 +404,25 @@
         });
     }
     
+    // 7. Upload file dari galeri
     function onFileSelected(file) {
         currentImageFile = file;
         const url = URL.createObjectURL(file);
         previewImg.src = url;
     }
     
+    // 8. Generate stamp + upload ke Drive
     async function generateAndUpload() {
         if (!trialValid) {
-            alert("Trial sudah habis.");
+            alert("Trial sudah habis. Tidak bisa menyimpan foto baru.");
             return;
         }
         if (!currentImageFile) {
-            alert("Ambil foto dulu.");
+            alert("Ambil foto dulu (gunakan tombol 'Ambil Foto' atau 'Upload').");
             return;
         }
         
-        const customText = stampTextArea.value || "TrueStamp";
+        const customText = stampTextArea.value || "TrueStamp Authentic";
         const img = new Image();
         const reader = new FileReader();
         
@@ -314,12 +435,14 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 
-                ctx.font = `600 ${Math.max(22, img.width * 0.045)}px "Inter"`;
+                // Stempel seperti kamera real
+                const fontSize = Math.max(24, img.width * 0.045);
+                ctx.font = `600 ${fontSize}px "Inter"`;
                 ctx.fillStyle = "#FFFFFF";
                 ctx.shadowColor = "rgba(0,0,0,0.85)";
                 ctx.shadowBlur = 8;
                 const lines = customText.split('\n');
-                const lineHeight = parseInt(ctx.font) * 1.4;
+                const lineHeight = fontSize * 1.4;
                 let startY = img.height - (lines.length * lineHeight) - 18;
                 for (let i = 0; i < lines.length; i++) {
                     ctx.fillText(lines[i], 18, startY + i * lineHeight);
@@ -333,12 +456,13 @@
                         device: navigator.userAgent,
                         customText: customText
                     };
+                    
                     const result = await callAPI('upload', { imageData: base64, metadata });
                     if (result.success) {
-                        alert("✅ Tersimpan ke Google Drive!");
+                        alert("✅ Foto berhasil tersimpan ke Google Drive!\n\nCek folder Drive Anda.");
                         previewImg.src = canvas.toDataURL();
                     } else {
-                        alert("❌ Gagal: " + (result.message || "unknown"));
+                        alert("❌ Gagal menyimpan: " + (result.message || result.error || "unknown error"));
                     }
                 }, 'image/png');
             };
@@ -354,22 +478,27 @@
         });
     }
     
+    // 9. INITIALIZATION
     (async function() {
-        deviceId = await getDeviceId();
+        await getDeviceId();
         const trialOk = await checkAndRegisterDevice();
         if (!trialOk) return;
         
-        await initCameraBackground();
-        initGPSBackground();
+        await initCamera();
+        initGPS();
         
+        // Event listeners
         captureCameraBtn.onclick = () => captureFromCamera();
         uploadFileBtn.onclick = () => fileInput.click();
         fileInput.onchange = (e) => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = generateAndUpload;
     })();
     
+    // Cleanup video stream saat page ditutup
     window.addEventListener('beforeunload', () => {
-        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+        }
     });
 </script>
 </body>
