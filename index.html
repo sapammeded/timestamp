@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TrueStamp | Authentic TimeStamp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3.4.1/dist/fp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #090E17;
+            color: #E2E8F0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1E293B;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFFFFF, #94A3B8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .logo p {
+            font-size: 0.7rem;
+            color: #5B6E8C;
+        }
+        .trial-badge {
+            background: #0F172A;
+            border: 1px solid #334155;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #0F1420;
+            border: 1px solid #1E293B;
+            border-radius: 1.2rem;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 1rem 1.25rem;
+            background: #0A0F18;
+            border-bottom: 1px solid #1E293B;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #8B9DC3;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #8B9DC3;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: #070B12;
+            border: 1px solid #1E293B;
+            border-radius: 0.6rem;
+            color: #E2E8F0;
+            font-family: 'Inter', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3B82F6;
+        }
+
+        button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+        button:hover {
+            background: #2563EB;
+        }
+        button:disabled {
+            background: #334155;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #334155;
+        }
+        .btn-outline:hover {
+            background: #1E293B;
+            border-color: #3B82F6;
+        }
+
+        .preview-area {
+            background: #070B12;
+            border-radius: 0.6rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .preview-img {
+            max-width: 100%;
+            border-radius: 0.4rem;
+            max-height: 280px;
+            object-fit: contain;
+        }
+
+        .hidden-camera {
+            display: none;
+        }
+
+        .alert {
+            background: #2D1A1A;
+            border: 1px solid #7F1A1A;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1>TrueStamp</h1>
+            <p>authentic timestamp · geo proof</p>
+        </div>
+        <div class="trial-badge" id="trialBadge">Memuat...</div>
+    </div>
+
+    <div id="blockedMessage" class="alert" style="display: none;">
+        ⛔ Trial 7 hari telah berakhir. Silakan berlangganan.
+    </div>
+
+    <div id="mainContent">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">📸 SUMBER FOTO</div>
+                <div class="card-body">
+                    <video id="video" autoplay playsinline class="hidden-camera"></video>
+                    
+                    <button id="captureCameraBtn">📷 AMBIL DARI KAMERA</button>
+                    <button id="uploadFileBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    
+                    <div style="margin-top: 1.2rem;">
+                        <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
+                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan&#10;📅 25 Maret 2026 14:30&#10;🎯 -8.1234, 112.5678"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">⚡ GENERATE & SIMPAN</div>
+                <div class="card-body">
+                    <button id="generateBtn">✨ TERAPKAN STEMPEL & SIMPAN</button>
+                    <div class="preview-area">
+                        <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23070B12'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23334155' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== KONFIGURASI APPS SCRIPT ==========
+    // GANTI dengan URL Apps Script Anda setelah deploy!
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhkFdkSyNH_KTVe5t9BMp-r9C9zwg6Vc9SP7DrKpyf-SMZxwpsFOM468BuuLCD9P5w/exec";
+    
+    let deviceId = null;
+    let trialValid = false;
+    let currentImageFile = null;
+    let userLocation = { lat: null, lng: null };
+    let videoStream = null;
+    
+    // DOM
+    const videoElem = document.getElementById('video');
+    const captureCameraBtn = document.getElementById('captureCameraBtn');
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const fileInput = document.getElementById('fileInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const previewImg = document.getElementById('previewImage');
+    const stampTextArea = document.getElementById('stampText');
+    const trialBadge = document.getElementById('trialBadge');
+    const mainContent = document.getElementById('mainContent');
+    const blockedDiv = document.getElementById('blockedMessage');
+    
+    // ========== 1. Fingerprint ==========
+    async function getDeviceId() {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        return result.visitorId;
+    }
+    
+    // ========== 2. API Call ke Apps Script ==========
+    async function callAPI(action, extra = {}) {
+        const payload = { action, deviceId, ...extra };
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch(e) {
+            console.error("Parse error:", text);
+            return { success: false, message: "Invalid response from server" };
+        }
+    }
+    
+    // ========== 3. Trial Check ==========
+    async function checkAndRegisterDevice() {
+        try {
+            const check = await callAPI('checkDevice');
+            if (check.isNewDevice === true) {
+                const reg = await callAPI('registerDevice');
+                if (reg.success) {
+                    trialValid = true;
+                    trialBadge.innerText = '✅ Trial aktif (7 hari)';
+                    return true;
+                }
+            } else if (check.isValid === true) {
+                trialValid = true;
+                trialBadge.innerText = `✅ Trial · sisa ${check.remainingDays} hari`;
+                return true;
+            } else {
+                trialValid = false;
+                trialBadge.innerText = '❌ Trial habis';
+                mainContent.style.display = 'none';
+                blockedDiv.style.display = 'block';
+                return false;
+            }
+        } catch(err) {
+            console.error("Trial check error:", err);
+            trialBadge.innerText = '⚠️ Gagal konek ke server';
+            return false;
+        }
+        return false;
+    }
+    
+    // ========== 4. Kamera & GPS (silent) ==========
+    async function initCameraBackground() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoStream = stream;
+            videoElem.srcObject = stream;
+            console.log("Kamera siap");
+            return true;
+        } catch (err) {
+            console.warn("Kamera ditolak:", err);
+            return false;
+        }
+    }
+    
+    function initGPSBackground() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userLocation.lat = pos.coords.latitude;
+                    userLocation.lng = pos.coords.longitude;
+                    if (!stampTextArea.value.trim()) {
+                        const now = new Date();
+                        stampTextArea.value = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}\n📍 ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`;
+                    }
+                },
+                (err) => { console.warn("GPS ditolak:", err); }
+            );
+        }
+    }
+    
+    // ========== 5. Capture dari kamera ==========
+    async function captureFromCamera() {
+        if (!videoStream) {
+            alert("Kamera tidak tersedia. Berikan izin kamera di browser.");
+            return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElem.videoWidth;
+        canvas.height = videoElem.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElem, 0, 0, canvas.width, canvas.height);
+        
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                const file = new File([blob], `camera_${Date.now()}.png`, { type: 'image/png' });
+                currentImageFile = file;
+                const url = URL.createObjectURL(blob);
+                previewImg.src = url;
+                resolve(true);
+            }, 'image/png');
+        });
+    }
+    
+    // ========== 6. Upload file ==========
+    function onFileSelected(file) {
+        currentImageFile = file;
+        const url = URL.createObjectURL(file);
+        previewImg.src = url;
+    }
+    
+    // ========== 7. Generate Stamp + Upload ==========
+    async function generateAndUpload() {
+        if (!trialValid) {
+            alert("Trial sudah habis. Tidak bisa menyimpan.");
+            return;
+        }
+        if (!currentImageFile) {
+            alert("Ambil foto dulu (kamera atau upload).");
+            return;
+        }
+        
+        const customText = stampTextArea.value || "TrueStamp";
+        
+        const img = new Image();
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.onload = async function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                ctx.font = `600 ${Math.max(22, img.width * 0.045)}px "Inter"`;
+                ctx.fillStyle = "#FFFFFF";
+                ctx.shadowColor = "rgba(0,0,0,0.85)";
+                ctx.shadowBlur = 8;
+                const lines = customText.split('\n');
+                const lineHeight = parseInt(ctx.font) * 1.4;
+                let startY = img.height - (lines.length * lineHeight) - 18;
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], 18, startY + i * lineHeight);
+                }
+                
+                canvas.toBlob(async (blob) => {
+                    const base64 = await blobToBase64(blob);
+                    const metadata = {
+                        latitude: userLocation.lat || 0,
+                        longitude: userLocation.lng || 0,
+                        device: navigator.userAgent,
+                        customText: customText
+                    };
+                    const result = await callAPI('upload', { imageData: base64, metadata });
+                    if (result.success) {
+                        alert("✅ Tersimpan ke Google Drive & log tercatat!");
+                        previewImg.src = canvas.toDataURL();
+                    } else {
+                        alert("❌ Gagal: " + (result.message || "unknown"));
+                    }
+                }, 'image/png');
+            };
+        };
+        reader.readAsDataURL(currentImageFile);
+    }
+    
+    function blobToBase64(blob) {
+        return new Promise((resolve) => {
+            const fr = new FileReader();
+            fr.onloadend = () => resolve(fr.result);
+            fr.readAsDataURL(blob);
+        });
+    }
+    
+    // ========== 8. INIT ==========
+    (async function() {
+        deviceId = await getDeviceId();
+        const trialOk = await checkAndRegisterDevice();
+        if (!trialOk) return;
+        
+        await initCameraBackground();
+        initGPSBackground();
+        
+        captureCameraBtn.onclick = async () => {
+            await captureFromCamera();
+        };
+        uploadFileBtn.onclick = () => {
+            fileInput.click();
+        };
+        fileInput.onchange = (e) => {
+            if (e.target.files[0]) onFileSelected(e.target.files[0]);
+        };
+        generateBtn.onclick = generateAndUpload;
+    })();
+    
+    window.addEventListener('beforeunload', () => {
+        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+    });
+</script>
+</body>
+</html>
