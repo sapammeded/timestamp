@@ -170,7 +170,6 @@
         <div class="trial-badge" id="trialBadge">Memuat...</div>
     </div>
 
-    <!-- Status Bar -->
     <div class="status-bar">
         <div class="status-item">
             <div class="status-dot" id="gpsDot"></div>
@@ -203,7 +202,7 @@
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     <div style="margin-top: 1.2rem;">
                         <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB&#10;🎯 -8.7234, 115.1689"></textarea>
+                        <textarea id="stampText" rows="3" placeholder="Contoh:&#10;📍 Pantai Selatan, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
                     </div>
                 </div>
             </div>
@@ -223,18 +222,15 @@
 
 <script>
     // ========== KONFIGURASI ==========
-    // GANTI dengan URL Apps Script Web App ANDA setelah deploy
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1sFqBMvdJvRejep_ZzERmoP04mERrlnvxwTHqjlUw5iJvWyPexbgOEwwoR1tWnCXa/exec";
+    // GANTI dengan URL Cloudflare Worker ANDA (tanpa /api/upload, cukup domain saja)
+    const WORKER_URL = "https://timestamp.sapammeded.workers.dev";
     
     let deviceId = null;
     let trialValid = false;
     let currentImageFile = null;
     let userLocation = { lat: null, lng: null };
     let videoStream = null;
-    let gpsReady = false;
-    let cameraReady = false;
     
-    // DOM Elements
     const videoElem = document.getElementById('video');
     const captureCameraBtn = document.getElementById('captureCameraBtn');
     const uploadFileBtn = document.getElementById('uploadFileBtn');
@@ -252,41 +248,36 @@
     const cameraDot = document.getElementById('cameraDot');
     const deviceDot = document.getElementById('deviceDot');
     
-    // Update status UI
     function updateGPSStatus(status, isReady) {
-        gpsReady = isReady;
         gpsStatusSpan.innerHTML = status;
         gpsDot.className = isReady ? 'status-dot' : 'status-dot warning';
         if (!isReady && status.includes('ditolak')) gpsDot.className = 'status-dot error';
     }
     
     function updateCameraStatus(status, isReady) {
-        cameraReady = isReady;
         cameraStatusSpan.innerHTML = status;
         cameraDot.className = isReady ? 'status-dot' : 'status-dot warning';
         if (!isReady && status.includes('ditolak')) cameraDot.className = 'status-dot error';
     }
     
-    // 1. Fingerprint Device ID
     async function getDeviceId() {
         try {
             const fp = await FingerprintJS.load();
             const result = await fp.get();
             deviceId = result.visitorId;
-            deviceStatusSpan.innerHTML = `✅ Device ID: ${deviceId.substring(0, 8)}...`;
+            deviceStatusSpan.innerHTML = `✅ ${deviceId.substring(0, 8)}...`;
             deviceDot.className = 'status-dot';
             return deviceId;
         } catch(err) {
-            deviceStatusSpan.innerHTML = '❌ Gagal load fingerprint';
+            deviceStatusSpan.innerHTML = '❌ Gagal';
             deviceDot.className = 'status-dot error';
             throw err;
         }
     }
     
-    // 2. API Call ke Apps Script
     async function callAPI(action, extra = {}) {
         const payload = { action, deviceId, ...extra };
-        const response = await fetch(APPS_SCRIPT_URL, {
+        const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -294,7 +285,6 @@
         return await response.json();
     }
     
-    // 3. Cek & Register Trial
     async function checkAndRegisterDevice() {
         try {
             const check = await callAPI('checkDevice');
@@ -324,67 +314,51 @@
         return false;
     }
     
-    // 4. Inisialisasi Kamera (Otomatis minta izin saat load)
     async function initCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } // Kamera belakang otomatis
+                video: { facingMode: "environment" }
             });
             videoStream = stream;
             videoElem.srcObject = stream;
-            updateCameraStatus('✅ Kamera aktif (siap capture)', true);
+            updateCameraStatus('✅ Kamera aktif', true);
             return true;
         } catch (err) {
-            console.warn("Kamera ditolak:", err);
-            updateCameraStatus('❌ Izin kamera ditolak', false);
+            updateCameraStatus('❌ Izin ditolak', false);
             return false;
         }
     }
     
-    // 5. Inisialisasi GPS (Otomatis minta izin saat load)
     function initGPS() {
         if ("geolocation" in navigator) {
-            updateGPSStatus('📍 Meminta izin lokasi...', false);
+            updateGPSStatus('📍 Meminta izin...', false);
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     userLocation.lat = pos.coords.latitude;
                     userLocation.lng = pos.coords.longitude;
                     updateGPSStatus(`📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`, true);
                     
-                    // Isi default stamp text jika kosong
                     if (!stampTextArea.value.trim()) {
                         const now = new Date();
-                        const formattedDate = now.toLocaleDateString('id-ID', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        });
-                        const formattedTime = now.toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        stampTextArea.value = `${formattedDate}\n⏰ ${formattedTime}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+                        stampTextArea.value = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
                 },
                 (err) => {
-                    console.warn("GPS ditolak:", err);
                     if (err.code === 1) {
-                        updateGPSStatus('⚠️ Izin lokasi ditolak (stempel manual)', false);
+                        updateGPSStatus('⚠️ Izin lokasi ditolak', false);
                     } else {
                         updateGPSStatus('⚠️ GPS tidak tersedia', false);
                     }
                 }
             );
         } else {
-            updateGPSStatus('❌ Browser tidak support GPS', false);
+            updateGPSStatus('❌ GPS tidak support', false);
         }
     }
     
-    // 6. Capture dari kamera
     async function captureFromCamera() {
         if (!videoStream) {
-            alert("Kamera tidak aktif. Berikan izin kamera terlebih dahulu.");
+            alert("Kamera tidak aktif. Berikan izin kamera.");
             return;
         }
         const canvas = document.createElement('canvas');
@@ -404,25 +378,23 @@
         });
     }
     
-    // 7. Upload file dari galeri
     function onFileSelected(file) {
         currentImageFile = file;
         const url = URL.createObjectURL(file);
         previewImg.src = url;
     }
     
-    // 8. Generate stamp + upload ke Drive
     async function generateAndUpload() {
         if (!trialValid) {
-            alert("Trial sudah habis. Tidak bisa menyimpan foto baru.");
+            alert("Trial sudah habis.");
             return;
         }
         if (!currentImageFile) {
-            alert("Ambil foto dulu (gunakan tombol 'Ambil Foto' atau 'Upload').");
+            alert("Ambil foto dulu.");
             return;
         }
         
-        const customText = stampTextArea.value || "TrueStamp Authentic";
+        const customText = stampTextArea.value || "TrueStamp";
         const img = new Image();
         const reader = new FileReader();
         
@@ -435,7 +407,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 
-                // Stempel seperti kamera real
                 const fontSize = Math.max(24, img.width * 0.045);
                 ctx.font = `600 ${fontSize}px "Inter"`;
                 ctx.fillStyle = "#FFFFFF";
@@ -456,13 +427,12 @@
                         device: navigator.userAgent,
                         customText: customText
                     };
-                    
                     const result = await callAPI('upload', { imageData: base64, metadata });
                     if (result.success) {
-                        alert("✅ Foto berhasil tersimpan ke Google Drive!\n\nCek folder Drive Anda.");
+                        alert("✅ Tersimpan ke Google Drive!");
                         previewImg.src = canvas.toDataURL();
                     } else {
-                        alert("❌ Gagal menyimpan: " + (result.message || result.error || "unknown error"));
+                        alert("❌ Gagal: " + (result.message || "unknown"));
                     }
                 }, 'image/png');
             };
@@ -478,7 +448,6 @@
         });
     }
     
-    // 9. INITIALIZATION
     (async function() {
         await getDeviceId();
         const trialOk = await checkAndRegisterDevice();
@@ -487,18 +456,14 @@
         await initCamera();
         initGPS();
         
-        // Event listeners
         captureCameraBtn.onclick = () => captureFromCamera();
         uploadFileBtn.onclick = () => fileInput.click();
         fileInput.onchange = (e) => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = generateAndUpload;
     })();
     
-    // Cleanup video stream saat page ditutup
     window.addEventListener('beforeunload', () => {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-        }
+        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
     });
 </script>
 </body>
